@@ -75,6 +75,14 @@ gradle.beforeProject { Project project ->
 					exceptionFormat = 'full'
 				}
 			}
+
+			apply plugin: 'io.spring.dependency-management'
+			dependencyManagement {
+				imports {
+					mavenBom 'org.springframework.boot:spring-boot-dependencies:1.5.8.RELEASE'
+					mavenBom 'io.projectreactor:reactor-bom:Bismuth-RELEASE'
+				}
+			}
 		}
 
 		if (!docs && !examples && !testProject && !legacyBraveProject) {
