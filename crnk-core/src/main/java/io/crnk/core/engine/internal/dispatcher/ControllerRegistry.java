@@ -1,5 +1,6 @@
 package io.crnk.core.engine.internal.dispatcher;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class ControllerRegistry {
 
 	private final List<BaseController> controllers = new LinkedList<>();
 
-	public ControllerRegistry(List<BaseController> baseControllers) {
+	public ControllerRegistry(Collection<BaseController> baseControllers) {
 		if (baseControllers != null) {
 			controllers.addAll(baseControllers);
 		}

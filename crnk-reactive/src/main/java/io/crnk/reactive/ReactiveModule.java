@@ -1,5 +1,24 @@
 package io.crnk.reactive;
 
-public class ReactiveModule {
+import io.crnk.core.module.Module;
+import io.crnk.reactive.internal.http.ReactiveJsonApiRequestProcessor;
 
+import java.util.ArrayList;
+import java.util.List;
+
+public class ReactiveModule implements Module {
+
+	private List<ReactiveJsonApiRequestProcessor> processors = new ArrayList<>();
+
+	@Override
+	public String getModuleName() {
+		return "reactive";
+	}
+
+	@Override
+	public void setupModule(ModuleContext context) {
+		processors.add(new ReactiveJsonApiRequestProcessor(context));
+
+
+	}
 }

@@ -20,6 +20,8 @@ import io.crnk.core.module.discovery.ResourceLookup;
 import io.crnk.core.module.discovery.ServiceDiscovery;
 import io.crnk.core.repository.decorate.RepositoryDecoratorFactory;
 
+import java.util.List;
+
 /**
  * Interface for extensions that can be registered to Crnk to provide a
  * well-defined set of extensions on top of the default functionality.
@@ -220,5 +222,7 @@ public interface Module {
 		ResourceFilterDirectory getResourceFilterDirectory();
 
 		void addResourceModificationFilter(ResourceModificationFilter filter);
+
+		<T> List<T> getInstancesByType(Class<T> clazz);
 	}
 }

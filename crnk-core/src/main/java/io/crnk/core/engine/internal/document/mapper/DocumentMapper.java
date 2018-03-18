@@ -1,11 +1,5 @@
 package io.crnk.core.engine.internal.document.mapper;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.crnk.core.engine.document.Document;
 import io.crnk.core.engine.document.ErrorData;
@@ -16,9 +10,15 @@ import io.crnk.core.engine.internal.utils.PreconditionUtil;
 import io.crnk.core.engine.properties.PropertiesProvider;
 import io.crnk.core.engine.query.QueryAdapter;
 import io.crnk.core.engine.registry.ResourceRegistry;
+import io.crnk.core.engine.result.Result;
 import io.crnk.core.repository.response.JsonApiResponse;
 import io.crnk.core.utils.Nullable;
 import io.crnk.legacy.internal.RepositoryMethodParameterProvider;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 public class DocumentMapper {
 
@@ -35,12 +35,12 @@ public class DocumentMapper {
 	private boolean client;
 
 	public DocumentMapper(ResourceRegistry resourceRegistry, ObjectMapper objectMapper, PropertiesProvider propertiesProvider,
-			ResourceFilterDirectory resourceFilterDirectory) {
+						  ResourceFilterDirectory resourceFilterDirectory) {
 		this(resourceRegistry, objectMapper, propertiesProvider, resourceFilterDirectory, false);
 	}
 
 	public DocumentMapper(ResourceRegistry resourceRegistry, ObjectMapper objectMapper, PropertiesProvider propertiesProvider,
-			ResourceFilterDirectory resourceFilterDirectory, boolean client) {
+						  ResourceFilterDirectory resourceFilterDirectory, boolean client) {
 		this.propertiesProvider = propertiesProvider;
 		this.client = client;
 		this.resourceFilterDirectory = resourceFilterDirectory;
@@ -57,12 +57,12 @@ public class DocumentMapper {
 	}
 
 	protected IncludeLookupSetter newIncludeLookupSetter(ResourceRegistry resourceRegistry, ResourceMapper resourceMapper,
-			PropertiesProvider propertiesProvider) {
+														 PropertiesProvider propertiesProvider) {
 		return new IncludeLookupSetter(resourceRegistry, resourceMapper, propertiesProvider);
 	}
 
 	protected DocumentMapperUtil newDocumentMapperUtil(ResourceRegistry resourceRegistry, ObjectMapper objectMapper,
-			PropertiesProvider propertiesProvider) {
+													   PropertiesProvider propertiesProvider) {
 		return new DocumentMapperUtil(resourceRegistry, objectMapper, propertiesProvider);
 	}
 
@@ -70,25 +70,8 @@ public class DocumentMapper {
 		return new ResourceMapper(util, client, objectMapper, resourceFilterDirectory);
 	}
 
-	public Document toDocument(JsonApiResponse response, QueryAdapter queryAdapter) {
-		return toDocument(response, queryAdapter, (RepositoryMethodParameterProvider) null);
-	}
 
-	public Document toDocument(JsonApiResponse response, QueryAdapter queryAdapter,
-			RepositoryMethodParameterProvider parameterProvider) {
-		Set<String> mappingConfig = Collections.emptySet();
-		return toDocument(response, queryAdapter, parameterProvider, mappingConfig);
-	}
-
-	public Document toDocument(JsonApiResponse response, QueryAdapter queryAdapter,
-			RepositoryMethodParameterProvider parameterProvider, Set<String> fieldsWidthEnforcedIdSerialization) {
-		DocumentMappingConfig mappingConfig = new DocumentMappingConfig();
-		mappingConfig.setParameterProvider(parameterProvider);
-		mappingConfig.setFieldsWithEnforcedIdSerialization(fieldsWidthEnforcedIdSerialization);
-		return toDocument(response, queryAdapter, mappingConfig);
-	}
-
-	public Document toDocument(JsonApiResponse response, QueryAdapter queryAdapter, DocumentMappingConfig mappingConfig) {
+	public Result<Document> toDocument(JsonApiResponse response, QueryAdapter queryAdapter, DocumentMappingConfig mappingConfig) {
 		if (response == null) {
 			return null;
 		}
@@ -120,8 +103,7 @@ public class DocumentMapper {
 			if (doc.isMultiple()) {
 				compact(doc.getCollectionData().get());
 			}
-		}
-		else {
+		} else {
 			compact(doc.getSingleData().get());
 		}
 	}
@@ -163,8 +145,7 @@ public class DocumentMapper {
 					dataList.add(resourceMapper.toData(obj, queryAdapter, resourceMappingConfig));
 				}
 				doc.setData(Nullable.of((Object) dataList));
-			}
-			else {
+			} else {
 				doc.setData(Nullable.of((Object) resourceMapper.toData(entity, queryAdapter, resourceMappingConfig)));
 			}
 		}

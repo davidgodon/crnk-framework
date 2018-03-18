@@ -18,7 +18,7 @@ public interface HttpRequestContextBase {
 
 	String getBaseUrl();
 
-	byte[] getRequestBody() throws IOException;
+	byte[] getRequestBody();
 
 	void setResponseHeader(String name, String value);
 

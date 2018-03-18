@@ -17,9 +17,9 @@ public interface ReactiveResourceRepository<T, I> extends Repository {
 
 	Mono<ResourceList<T>> findAll(Collection<I> ids, QuerySpec querySpec);
 
-	Mono<T> save(I resource);
+	Mono<T> save(T resource);
 
-	Mono<T> create(I resource);
+	Mono<T> create(T resource);
 
 	Mono<Void> delete(I id);
 

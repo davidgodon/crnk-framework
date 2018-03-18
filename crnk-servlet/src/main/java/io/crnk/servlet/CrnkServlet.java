@@ -63,6 +63,8 @@ public class CrnkServlet extends HttpServlet {
 
 	@Override
 	protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		request.startAsync(request, response);
+
 		ServletContext servletContext = getServletContext();
 
 		ServletRequestContext context = new ServletRequestContext(servletContext, request, response, boot.getWebPathPrefix());

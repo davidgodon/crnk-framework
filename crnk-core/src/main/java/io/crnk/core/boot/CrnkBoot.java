@@ -2,7 +2,6 @@ package io.crnk.core.boot;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-
 import io.crnk.core.engine.error.JsonApiExceptionMapper;
 import io.crnk.core.engine.filter.DocumentFilter;
 import io.crnk.core.engine.filter.ResourceFilterDirectory;
@@ -10,7 +9,7 @@ import io.crnk.core.engine.filter.ResourceModificationFilter;
 import io.crnk.core.engine.http.HttpRequestContextAware;
 import io.crnk.core.engine.internal.CoreModule;
 import io.crnk.core.engine.internal.dispatcher.ControllerRegistry;
-import io.crnk.core.engine.internal.dispatcher.ControllerRegistryBuilder;
+import io.crnk.core.engine.internal.dispatcher.controller.*;
 import io.crnk.core.engine.internal.document.mapper.DocumentMapper;
 import io.crnk.core.engine.internal.exception.ExceptionMapperRegistry;
 import io.crnk.core.engine.internal.http.HttpRequestProcessorImpl;
@@ -23,11 +22,7 @@ import io.crnk.core.engine.parser.TypeParser;
 import io.crnk.core.engine.properties.NullPropertiesProvider;
 import io.crnk.core.engine.properties.PropertiesProvider;
 import io.crnk.core.engine.query.QueryAdapterBuilder;
-import io.crnk.core.engine.registry.DefaultResourceRegistryPart;
-import io.crnk.core.engine.registry.HierarchicalResourceRegistryPart;
-import io.crnk.core.engine.registry.RegistryEntry;
-import io.crnk.core.engine.registry.ResourceRegistry;
-import io.crnk.core.engine.registry.ResourceRegistryPart;
+import io.crnk.core.engine.registry.*;
 import io.crnk.core.engine.url.ConstantServiceUrlProvider;
 import io.crnk.core.engine.url.ServiceUrlProvider;
 import io.crnk.core.module.Module;
@@ -50,9 +45,7 @@ import io.crnk.legacy.queryParams.QueryParamsBuilder;
 import io.crnk.legacy.repository.annotations.JsonApiRelationshipRepository;
 import io.crnk.legacy.repository.annotations.JsonApiResourceRepository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Facilitates the startup of Crnk in various environments (Spring, CDI,
@@ -207,8 +200,7 @@ public class CrnkBoot {
 		ResourceRegistryPart rootPart;
 		if (registryParts.isEmpty()) {
 			rootPart = new DefaultResourceRegistryPart();
-		}
-		else {
+		} else {
 			HierarchicalResourceRegistryPart hierarchialPart = new HierarchicalResourceRegistryPart();
 			for (Map.Entry<String, ResourceRegistryPart> entry : registryParts.entrySet()) {
 				hierarchialPart.putPart(entry.getKey(), entry.getValue());
@@ -239,32 +231,42 @@ public class CrnkBoot {
 	}
 
 	private HttpRequestProcessorImpl createRequestDispatcher(ExceptionMapperRegistry exceptionMapperRegistry) {
-		ControllerRegistryBuilder controllerRegistryBuilder =
-				newControllerRegistryBuilder(resourceRegistry, moduleRegistry.getTypeParser(), objectMapper,
-						propertiesProvider, moduleRegistry.getContext().getResourceFilterDirectory(),
-						moduleRegistry.getResourceModificationFilters());
-		ControllerRegistry controllerRegistry = controllerRegistryBuilder.build();
-		this.documentMapper = controllerRegistryBuilder.getDocumentMapper();
-
-		QueryAdapterBuilder queryAdapterBuilder;
-		if (queryParamsBuilder != null) {
-			queryAdapterBuilder = new QueryParamsAdapterBuilder(queryParamsBuilder, moduleRegistry);
-		}
-		else {
-			queryAdapterBuilder = new QuerySpecAdapterBuilder(querySpecDeserializer, moduleRegistry);
-		}
-
-		return new HttpRequestProcessorImpl(moduleRegistry, controllerRegistry, exceptionMapperRegistry, queryAdapterBuilder);
+		this.documentMapper = createDocumentMapper();
+		return new HttpRequestProcessorImpl(moduleRegistry, exceptionMapperRegistry);
 	}
 
-	protected ControllerRegistryBuilder newControllerRegistryBuilder(
-			@SuppressWarnings("SameParameterValue") ResourceRegistry resourceRegistry,
-			@SuppressWarnings("SameParameterValue") TypeParser typeParser,
-			@SuppressWarnings("SameParameterValue") ObjectMapper objectMapper, PropertiesProvider propertiesProvider,
-			ResourceFilterDirectory resourceFilterDirectory, List<ResourceModificationFilter> modificationFilters) {
-		return new ControllerRegistryBuilder(resourceRegistry, moduleRegistry.getTypeParser(), objectMapper,
-				propertiesProvider, moduleRegistry.getContext().getResourceFilterDirectory(),
-				moduleRegistry.getResourceModificationFilters());
+	protected QueryAdapterBuilder createQueryAdapterBuilder() {
+		if (queryParamsBuilder != null) {
+			return new QueryParamsAdapterBuilder(queryParamsBuilder, moduleRegistry);
+		} else {
+			return new QuerySpecAdapterBuilder(querySpecDeserializer, moduleRegistry);
+		}
+	}
+
+	protected DocumentMapper createDocumentMapper() {
+		ResourceFilterDirectory filterDirectory = moduleRegistry.getContext().getResourceFilterDirectory();
+		return new DocumentMapper(resourceRegistry, objectMapper, propertiesProvider, filterDirectory);
+	}
+
+	protected ControllerRegistry createControllerRegistry() {
+
+		TypeParser typeParser = moduleRegistry.getTypeParser();
+		List<ResourceModificationFilter> modificationFilters = moduleRegistry.getResourceModificationFilters();
+
+		Set<BaseController> controllers = new HashSet<>();
+		controllers.add(new RelationshipsResourceDelete(resourceRegistry, typeParser, modificationFilters));
+		controllers.add(new RelationshipsResourcePatch(resourceRegistry, typeParser, modificationFilters));
+		controllers.add(new RelationshipsResourcePost(resourceRegistry, typeParser, modificationFilters));
+		controllers.add(new ResourceDelete(resourceRegistry, modificationFilters));
+		controllers.add(new CollectionGet(resourceRegistry, typeParser, documentMapper));
+		controllers.add(new FieldResourceGet(resourceRegistry, typeParser, documentMapper));
+		controllers.add(new RelationshipsResourceGet(resourceRegistry, typeParser, documentMapper));
+		controllers.add(new ResourceGet(resourceRegistry, typeParser, documentMapper));
+		controllers.add(new FieldResourcePost(resourceRegistry, propertiesProvider, typeParser, objectMapper, documentMapper, modificationFilters));
+		controllers.add(new ResourcePatch(resourceRegistry, propertiesProvider, typeParser, objectMapper, documentMapper, modificationFilters));
+		controllers.add(new ResourcePost(resourceRegistry, propertiesProvider, typeParser, objectMapper, documentMapper, modificationFilters));
+
+		return new ControllerRegistry(controllers);
 	}
 
 	public DocumentMapper getDocumentMapper() {
@@ -280,7 +282,10 @@ public class CrnkBoot {
 
 			@Override
 			public void setupModule(ModuleContext context) {
-				this.addHttpRequestProcessor(new JsonApiRequestProcessor(context));
+				ControllerRegistry controllerRegistry = createControllerRegistry();
+				QueryAdapterBuilder queryAdapterBuilder = createQueryAdapterBuilder();
+
+				this.addHttpRequestProcessor(new JsonApiRequestProcessor(context, controllerRegistry, queryAdapterBuilder));
 				super.setupModule(context);
 			}
 		};
@@ -478,8 +483,7 @@ public class CrnkBoot {
 			List<QuerySpecDeserializer> list = serviceDiscovery.getInstancesByType(QuerySpecDeserializer.class);
 			if (list.isEmpty()) {
 				querySpecDeserializer = new DefaultQuerySpecDeserializer();
-			}
-			else {
+			} else {
 				querySpecDeserializer = list.get(0);
 			}
 		}
@@ -518,7 +522,7 @@ public class CrnkBoot {
 			}
 		}
 
-		for (PagingBehavior pagingBehavior: pagingBehaviors) {
+		for (PagingBehavior pagingBehavior : pagingBehaviors) {
 			if (pagingBehavior instanceof OffsetLimitPagingBehavior) {
 				if (defaultPageLimit != null) {
 					((OffsetLimitPagingBehavior) pagingBehavior).setDefaultLimit(defaultPageLimit);
