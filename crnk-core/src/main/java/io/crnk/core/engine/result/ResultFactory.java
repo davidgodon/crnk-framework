@@ -6,5 +6,5 @@ public interface ResultFactory {
 
 	<T> Result<T> just(T object);
 
-	<T> Result<List<T>> all(List<? extends T> results);
+	<T> Result<List<T>> all(List<Result<T>> results);
 }

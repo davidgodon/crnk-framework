@@ -1,5 +1,12 @@
 package io.crnk.core.engine.internal.repository;
 
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import io.crnk.core.engine.dispatcher.RepositoryRequestSpec;
 import io.crnk.core.engine.filter.RepositoryFilterContext;
 import io.crnk.core.engine.http.HttpMethod;
@@ -7,6 +14,8 @@ import io.crnk.core.engine.information.resource.ResourceField;
 import io.crnk.core.engine.information.resource.ResourceInformation;
 import io.crnk.core.engine.internal.utils.MultivaluedMap;
 import io.crnk.core.engine.query.QueryAdapter;
+import io.crnk.core.engine.result.Result;
+import io.crnk.core.engine.result.SimpleResult;
 import io.crnk.core.module.ModuleRegistry;
 import io.crnk.core.queryspec.QuerySpec;
 import io.crnk.core.repository.BulkRelationshipRepositoryV2;
@@ -15,29 +24,25 @@ import io.crnk.core.repository.response.JsonApiResponse;
 import io.crnk.legacy.internal.AnnotatedRelationshipRepositoryAdapter;
 import io.crnk.legacy.repository.RelationshipRepository;
 
-import java.io.Serializable;
-import java.util.*;
-
 /**
  * A repository adapter for relationship repository.
  */
 @SuppressWarnings("unchecked")
-public class RelationshipRepositoryAdapterImpl<T, I extends Serializable, D, J extends Serializable>
-		extends ResponseRepositoryAdapter {
+public class RelationshipRepositoryAdapterImpl extends ResponseRepositoryAdapter implements RelationshipRepositoryAdapter {
 
 	private final Object relationshipRepository;
 
 	private final boolean isAnnotated;
 
 	public RelationshipRepositoryAdapterImpl(ResourceInformation resourceInformation, ModuleRegistry moduleRegistry,
-											 Object relationshipRepository) {
+			Object relationshipRepository) {
 		super(resourceInformation, moduleRegistry);
 		this.relationshipRepository = relationshipRepository;
 		this.isAnnotated = relationshipRepository instanceof AnnotatedRelationshipRepositoryAdapter;
 	}
 
 	@SuppressWarnings("rawtypes")
-	public JsonApiResponse setRelation(T source, J targetId, ResourceField field, QueryAdapter queryAdapter) {
+	public Result<JsonApiResponse> setRelation(Object source, Object targetId, ResourceField field, QueryAdapter queryAdapter) {
 		RepositoryRequestFilterChainImpl chain = new RepositoryRequestFilterChainImpl() {
 
 			@Override
@@ -62,11 +67,12 @@ public class RelationshipRepositoryAdapterImpl<T, I extends Serializable, D, J e
 		};
 		RepositoryRequestSpec requestSpec = RepositoryRequestSpecImpl
 				.forRelation(moduleRegistry, HttpMethod.PATCH, source, queryAdapter, Arrays.asList(targetId), field);
-		return chain.doFilter(newRepositoryFilterContext(requestSpec));
+		return new SimpleResult<>(chain.doFilter(newRepositoryFilterContext(requestSpec)));
 	}
 
 	@SuppressWarnings("rawtypes")
-	public JsonApiResponse setRelations(T source, Iterable<J> targetIds, ResourceField field, QueryAdapter queryAdapter) {
+	public Result<JsonApiResponse> setRelations(Object source, Collection targetIds, ResourceField field, QueryAdapter
+			queryAdapter) {
 		RepositoryRequestFilterChainImpl chain = new RepositoryRequestFilterChainImpl() {
 
 			@Override
@@ -92,11 +98,12 @@ public class RelationshipRepositoryAdapterImpl<T, I extends Serializable, D, J e
 		};
 		RepositoryRequestSpec requestSpec =
 				RepositoryRequestSpecImpl.forRelation(moduleRegistry, HttpMethod.PATCH, source, queryAdapter, targetIds, field);
-		return chain.doFilter(newRepositoryFilterContext(requestSpec));
+		return new SimpleResult<>(chain.doFilter(newRepositoryFilterContext(requestSpec)));
 	}
 
 	@SuppressWarnings("rawtypes")
-	public JsonApiResponse addRelations(T source, Iterable<J> targetIds, ResourceField field, QueryAdapter queryAdapter) {
+	public Result<JsonApiResponse> addRelations(Object source, Collection targetIds, ResourceField field, QueryAdapter
+			queryAdapter) {
 		RepositoryRequestFilterChainImpl chain = new RepositoryRequestFilterChainImpl() {
 
 			@Override
@@ -122,11 +129,12 @@ public class RelationshipRepositoryAdapterImpl<T, I extends Serializable, D, J e
 		};
 		RepositoryRequestSpec requestSpec =
 				RepositoryRequestSpecImpl.forRelation(moduleRegistry, HttpMethod.POST, source, queryAdapter, targetIds, field);
-		return chain.doFilter(newRepositoryFilterContext(requestSpec));
+		return new SimpleResult<>(chain.doFilter(newRepositoryFilterContext(requestSpec)));
 	}
 
 	@SuppressWarnings("rawtypes")
-	public JsonApiResponse removeRelations(T source, Iterable<J> targetIds, ResourceField field, QueryAdapter queryAdapter) {
+	public Result<JsonApiResponse> removeRelations(Object source, Collection targetIds, ResourceField field,
+			QueryAdapter queryAdapter) {
 		RepositoryRequestFilterChainImpl chain = new RepositoryRequestFilterChainImpl() {
 
 			@Override
@@ -153,11 +161,11 @@ public class RelationshipRepositoryAdapterImpl<T, I extends Serializable, D, J e
 		};
 		RepositoryRequestSpec requestSpec =
 				RepositoryRequestSpecImpl.forRelation(moduleRegistry, HttpMethod.DELETE, source, queryAdapter, targetIds, field);
-		return chain.doFilter(newRepositoryFilterContext(requestSpec));
+		return new SimpleResult<>(chain.doFilter(newRepositoryFilterContext(requestSpec)));
 	}
 
 	@SuppressWarnings("rawtypes")
-	public JsonApiResponse findOneTarget(I sourceId, ResourceField field, QueryAdapter queryAdapter) {
+	public Result<JsonApiResponse> findOneTarget(Object sourceId, ResourceField field, QueryAdapter queryAdapter) {
 		RepositoryRequestFilterChainImpl chain = new RepositoryRequestFilterChainImpl() {
 
 			@Override
@@ -175,7 +183,8 @@ public class RelationshipRepositoryAdapterImpl<T, I extends Serializable, D, J e
 				else if (relationshipRepository instanceof RelationshipRepositoryV2) {
 					RelationshipRepositoryV2 querySpecRepository = (RelationshipRepositoryV2) relationshipRepository;
 					ResourceInformation targetResourceInformation =
-							moduleRegistry.getResourceRegistry().getEntry(field.getOppositeResourceType()).getResourceInformation();
+							moduleRegistry.getResourceRegistry().getEntry(field.getOppositeResourceType())
+									.getResourceInformation();
 					resource = querySpecRepository
 							.findOneTarget(sourceId, field.getUnderlyingName(), request.getQuerySpec(targetResourceInformation));
 				}
@@ -188,11 +197,10 @@ public class RelationshipRepositoryAdapterImpl<T, I extends Serializable, D, J e
 		};
 		RepositoryRequestSpec requestSpec =
 				RepositoryRequestSpecImpl.forFindTarget(moduleRegistry, queryAdapter, Arrays.asList(sourceId), field);
-		return chain.doFilter(newRepositoryFilterContext(requestSpec));
+		return new SimpleResult<>(chain.doFilter(newRepositoryFilterContext(requestSpec)));
 	}
 
-	@SuppressWarnings("rawtypes")
-	public JsonApiResponse findManyTargets(I sourceId, ResourceField field, QueryAdapter queryAdapter) {
+	public Result<JsonApiResponse> findManyTargets(Object sourceId, ResourceField field, QueryAdapter queryAdapter) {
 		RepositoryRequestFilterChainImpl chain = new RepositoryRequestFilterChainImpl() {
 
 			@Override
@@ -210,7 +218,8 @@ public class RelationshipRepositoryAdapterImpl<T, I extends Serializable, D, J e
 				else if (relationshipRepository instanceof RelationshipRepositoryV2) {
 					RelationshipRepositoryV2 querySpecRepository = (RelationshipRepositoryV2) relationshipRepository;
 					ResourceInformation targetResourceInformation =
-							moduleRegistry.getResourceRegistry().getEntry(field.getOppositeResourceType()).getResourceInformation();
+							moduleRegistry.getResourceRegistry().getEntry(field.getOppositeResourceType())
+									.getResourceInformation();
 					resources = querySpecRepository.findManyTargets(sourceId, field.getUnderlyingName(),
 							request.getQuerySpec(targetResourceInformation));
 				}
@@ -223,18 +232,19 @@ public class RelationshipRepositoryAdapterImpl<T, I extends Serializable, D, J e
 		};
 		RepositoryRequestSpec requestSpec =
 				RepositoryRequestSpecImpl.forFindTarget(moduleRegistry, queryAdapter, Arrays.asList(sourceId), field);
-		return chain.doFilter(newRepositoryFilterContext(requestSpec));
+		return new SimpleResult<>(chain.doFilter(newRepositoryFilterContext(requestSpec)));
 	}
 
 	@SuppressWarnings("rawtypes")
-	public Map<I, JsonApiResponse> findBulkManyTargets(List<I> sourceIds, ResourceField field, QueryAdapter queryAdapter) {
+	public Result<Map<Object, JsonApiResponse>> findBulkManyTargets(Collection sourceIds, ResourceField field,
+			QueryAdapter queryAdapter) {
 		if (relationshipRepository instanceof BulkRelationshipRepositoryV2) {
-			RepositoryBulkRequestFilterChainImpl<I> chain = new RepositoryBulkRequestFilterChainImpl<I>() {
+			RepositoryBulkRequestFilterChainImpl chain = new RepositoryBulkRequestFilterChainImpl() {
 
 				@Override
-				protected Map<I, JsonApiResponse> invoke(RepositoryFilterContext context) {
+				protected Map<Object, JsonApiResponse> invoke(RepositoryFilterContext context) {
 					RepositoryRequestSpec request = context.getRequest();
-					Iterable<I> sourceIds = request.getIds();
+					Iterable sourceIds = request.getIds();
 					ResourceField field = request.getRelationshipField();
 					QueryAdapter queryAdapter = request.getQueryAdapter();
 
@@ -248,29 +258,30 @@ public class RelationshipRepositoryAdapterImpl<T, I extends Serializable, D, J e
 				}
 			};
 			RepositoryRequestSpec requestSpec =
-					RepositoryRequestSpecImpl.forFindTarget(moduleRegistry, queryAdapter, sourceIds, field);
-			return chain.doFilter(newRepositoryFilterContext(requestSpec));
+					RepositoryRequestSpecImpl.forFindTarget(moduleRegistry, queryAdapter, Arrays.asList(sourceIds), field);
+			return new SimpleResult<>(chain.doFilter(newRepositoryFilterContext(requestSpec)));
 		}
 		else {
 			// fallback to non-bulk operation
-			Map<I, JsonApiResponse> responseMap = new HashMap<>();
-			for (I sourceId : sourceIds) {
-				JsonApiResponse response = findManyTargets(sourceId, field, queryAdapter);
+			Map<Object, JsonApiResponse> responseMap = new HashMap<>();
+			for (Object sourceId : sourceIds) {
+				JsonApiResponse response = findManyTargets(sourceId, field, queryAdapter).get();
 				responseMap.put(sourceId, response);
 			}
-			return responseMap;
+			return new SimpleResult<>(responseMap);
 		}
 	}
 
 	@SuppressWarnings("rawtypes")
-	public Map<I, JsonApiResponse> findBulkOneTargets(List<I> sourceIds, ResourceField field, QueryAdapter queryAdapter) {
+	public Result<Map<Object, JsonApiResponse>> findBulkOneTargets(Collection sourceIds, ResourceField field, QueryAdapter
+			queryAdapter) {
 
 		if (relationshipRepository instanceof BulkRelationshipRepositoryV2) {
 
-			RepositoryBulkRequestFilterChainImpl<I> chain = new RepositoryBulkRequestFilterChainImpl<I>() {
+			RepositoryBulkRequestFilterChainImpl chain = new RepositoryBulkRequestFilterChainImpl() {
 
 				@Override
-				protected Map<I, JsonApiResponse> invoke(RepositoryFilterContext context) {
+				protected Map<Object, JsonApiResponse> invoke(RepositoryFilterContext context) {
 					RepositoryRequestSpec request = context.getRequest();
 					Iterable<?> sourceIds = request.getIds();
 					ResourceField field = request.getRelationshipField();
@@ -280,31 +291,31 @@ public class RelationshipRepositoryAdapterImpl<T, I extends Serializable, D, J e
 					ResourceInformation targetResourceInformation =
 							moduleRegistry.getResourceRegistry().getEntry(field.getOppositeResourceType())
 									.getResourceInformation();
-					MultivaluedMap<I, D> targetsMap = bulkRepository
+					MultivaluedMap targetsMap = bulkRepository
 							.findTargets(sourceIds, field.getUnderlyingName(), request.getQuerySpec(targetResourceInformation));
 					return toResponses(targetsMap, false, queryAdapter, field, HttpMethod.GET);
 				}
 			};
 			RepositoryRequestSpec requestSpec =
-					RepositoryRequestSpecImpl.forFindTarget(moduleRegistry, queryAdapter, sourceIds, field);
-			return chain.doFilter(newRepositoryFilterContext(requestSpec));
+					RepositoryRequestSpecImpl.forFindTarget(moduleRegistry, queryAdapter, Arrays.asList(sourceIds), field);
+			return new SimpleResult<>(chain.doFilter(newRepositoryFilterContext(requestSpec)));
 		}
 		else {
 			// fallback to non-bulk operation
-			Map<I, JsonApiResponse> responseMap = new HashMap<>();
-			for (I sourceId : sourceIds) {
-				JsonApiResponse response = findOneTarget(sourceId, field, queryAdapter);
+			Map<Object, JsonApiResponse> responseMap = new HashMap<>();
+			for (Object sourceId : sourceIds) {
+				JsonApiResponse response = findOneTarget(sourceId, field, queryAdapter).get();
 				responseMap.put(sourceId, response);
 			}
-			return responseMap;
+			return new SimpleResult<>(responseMap);
 		}
 	}
 
 
-	private Map<I, JsonApiResponse> toResponses(MultivaluedMap<I, D> targetsMap, boolean isMany, QueryAdapter queryAdapter,
+	private Map<Object, JsonApiResponse> toResponses(MultivaluedMap targetsMap, boolean isMany, QueryAdapter queryAdapter,
 			ResourceField field, HttpMethod method) {
-		Map<I, JsonApiResponse> responseMap = new HashMap<>();
-		for (I sourceId : targetsMap.keySet()) {
+		Map<Object, JsonApiResponse> responseMap = new HashMap<>();
+		for (Object sourceId : targetsMap.keySet()) {
 			Object targets;
 			if (isMany) {
 				targets = targetsMap.getList(sourceId);

@@ -1,18 +1,16 @@
 package io.crnk.core.engine.internal.repository;
 
+import java.util.Collection;
+import java.util.Map;
+
 import io.crnk.core.engine.information.resource.ResourceField;
 import io.crnk.core.engine.query.QueryAdapter;
 import io.crnk.core.engine.result.Result;
 import io.crnk.core.repository.response.JsonApiResponse;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
 /**
  * A repository adapter for relationship repository.
  */
-@SuppressWarnings("unchecked")
 public interface RelationshipRepositoryAdapter {
 
 	Result<JsonApiResponse> setRelation(Object source, Object targetId, ResourceField field, QueryAdapter queryAdapter);
@@ -28,9 +26,10 @@ public interface RelationshipRepositoryAdapter {
 
 	Result<JsonApiResponse> findManyTargets(Object sourceId, ResourceField field, QueryAdapter queryAdapter);
 
-	Result<Map<?, JsonApiResponse>> findBulkManyTargets(List sourceIds, ResourceField field, QueryAdapter queryAdapter);
+	Result<Map<Object, JsonApiResponse>> findBulkManyTargets(Collection sourceIds, ResourceField field, QueryAdapter
+			queryAdapter);
 
-	Result<Map<?, JsonApiResponse>> findBulkOneTargets(List sourceIds, ResourceField field, QueryAdapter queryAdapter);
+	Result<Map<Object, JsonApiResponse>> findBulkOneTargets(Collection sourceIds, ResourceField field, QueryAdapter queryAdapter);
 
 
 }

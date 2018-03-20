@@ -17,7 +17,7 @@ public class SetOwnerStrategy<T, I extends Serializable, D, J extends Serializab
 	@Override
 	public void setRelation(T source, J targetId, String fieldName) {
 		RegistryEntry sourceEntry = context.getSourceEntry();
-		ResourceRepositoryAdapter<T, I> sourceAdapter = sourceEntry.getResourceRepository();
+		ResourceRepositoryAdapter sourceAdapter = sourceEntry.getResourceRepository();
 		ResourceInformation sourceInformation = sourceEntry.getResourceInformation();
 		ResourceField field = sourceInformation.findFieldByUnderlyingName(fieldName);
 		if (field.hasIdField()) {
@@ -34,7 +34,7 @@ public class SetOwnerStrategy<T, I extends Serializable, D, J extends Serializab
 	@Override
 	public void setRelations(T source, Iterable<J> targetIds, String fieldName) {
 		RegistryEntry sourceEntry = context.getSourceEntry();
-		ResourceRepositoryAdapter<T, I> sourceAdapter = sourceEntry.getResourceRepository();
+		ResourceRepositoryAdapter sourceAdapter = sourceEntry.getResourceRepository();
 		ResourceInformation sourceInformation = sourceEntry.getResourceInformation();
 		ResourceField field = sourceInformation.findFieldByUnderlyingName(fieldName);
 		if (field.hasIdField()) {
@@ -51,7 +51,7 @@ public class SetOwnerStrategy<T, I extends Serializable, D, J extends Serializab
 	@Override
 	public void addRelations(T source, Iterable<J> targetIds, String fieldName) {
 		RegistryEntry sourceEntry = context.getSourceEntry();
-		ResourceRepositoryAdapter<T, I> sourceAdapter = sourceEntry.getResourceRepository();
+		ResourceRepositoryAdapter sourceAdapter = sourceEntry.getResourceRepository();
 		ResourceInformation sourceInformation = sourceEntry.getResourceInformation();
 		ResourceField field = sourceInformation.findFieldByUnderlyingName(fieldName);
 		if (field.hasIdField()) {
@@ -73,7 +73,7 @@ public class SetOwnerStrategy<T, I extends Serializable, D, J extends Serializab
 	@Override
 	public void removeRelations(T source, Iterable<J> targetIds, String fieldName) {
 		RegistryEntry sourceEntry = context.getSourceEntry();
-		ResourceRepositoryAdapter<T, I> sourceAdapter = sourceEntry.getResourceRepository();
+		ResourceRepositoryAdapter sourceAdapter = sourceEntry.getResourceRepository();
 		ResourceInformation sourceInformation = sourceEntry.getResourceInformation();
 		ResourceField field = sourceInformation.findFieldByUnderlyingName(fieldName);
 		if (field.hasIdField()) {

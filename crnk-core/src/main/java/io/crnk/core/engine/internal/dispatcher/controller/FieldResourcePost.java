@@ -1,5 +1,10 @@
 package io.crnk.core.engine.internal.dispatcher.controller;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import io.crnk.core.engine.dispatcher.Response;
 import io.crnk.core.engine.document.Document;
 import io.crnk.core.engine.document.Resource;
@@ -24,11 +29,6 @@ import io.crnk.core.engine.registry.ResourceRegistry;
 import io.crnk.core.engine.result.Result;
 import io.crnk.core.repository.response.JsonApiResponse;
 import io.crnk.legacy.internal.RepositoryMethodParameterProvider;
-
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Creates a new post in a similar manner as in {@link ResourcePost}, but additionally adds a relation to a field.
@@ -79,11 +79,11 @@ public class FieldResourcePost extends ResourceUpsert {
 				.merge(it -> resourceRepository.create(newResource, queryAdapter));
 		Result<Document> createdDocument = createdResource.merge(it -> documentMapper.toDocument(it, queryAdapter, mappingConfig));
 
-		Result<JsonApiResponse> parentResource = endpointRegistryEntry.getResourceRepository(parameterProvider)
-				.findOne(castedResourceId, queryAdapter);
+		Result<JsonApiResponse> parentResource = endpointRegistryEntry.getResourceRepository(parameterProvider).findOne(castedResourceId, queryAdapter);
 
 		return createdDocument.mergeMap(parentResource,
 				(created, parent) -> attachToParent(parent, endpointRegistryEntry, relationshipField, created, parameterProvider, queryAdapter))
+				.merge(it -> it)
 				.map(this::toResponse);
 	}
 

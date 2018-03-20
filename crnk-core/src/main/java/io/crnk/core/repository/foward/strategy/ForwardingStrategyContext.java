@@ -55,12 +55,12 @@ public class ForwardingStrategyContext {
 	public <Q> Iterable<Q> findAll(RegistryEntry entry, Iterable<?> targetIds) {
 		ResourceRepositoryAdapter targetAdapter = entry.getResourceRepository();
 		QueryAdapter queryAdapter = new QuerySpecAdapter(new QuerySpec(entry.getResourceInformation()), resourceRegistry);
-		return (Iterable) targetAdapter.findAll(targetIds, queryAdapter).getEntity();
+		return (Iterable) targetAdapter.findAll(targetIds, queryAdapter).get().getEntity();
 	}
 
 	public <Q> Q findOne(RegistryEntry entry, Serializable id) {
 		ResourceRepositoryAdapter targetAdapter = entry.getResourceRepository();
 		QueryAdapter queryAdapter = new QuerySpecAdapter(new QuerySpec(entry.getResourceInformation()), resourceRegistry);
-		return (Q) targetAdapter.findOne(id, queryAdapter).getEntity();
+		return (Q) targetAdapter.findOne(id, queryAdapter).get().getEntity();
 	}
 }

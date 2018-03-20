@@ -15,7 +15,7 @@ public interface Result<T> {
 
 	Result<T> doWork(Consumer<T> function);
 
-	<D, R> Result<R> mergeMap(Result<D> other, BiFunction<T, D, Result<R>> function);
+	<D, R> Result<R> mergeMap(Result<D> other, BiFunction<T, D, R> function);
 
 	<R> Result<R> merge(Function<T, Result<R>> other);
 

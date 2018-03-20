@@ -30,7 +30,7 @@ public class GetFromOwnerStrategy<T, I extends Serializable, D, J extends Serial
 		RegistryEntry targetEntry = context.getTargetEntry(field);
 
 		List sources = (List) sourceEntry.getResourceRepository().findAll(sourceIds,
-				context.createSaveQueryAdapter(fieldName)).getEntity();
+				context.createSaveQueryAdapter(fieldName)).get().getEntity();
 
 		ResourceInformation targetInformation = targetEntry.getResourceInformation();
 
@@ -48,8 +48,8 @@ public class GetFromOwnerStrategy<T, I extends Serializable, D, J extends Serial
 			}
 
 			QuerySpec idQuerySpec = new QuerySpec(targetInformation);
-			ResourceRepositoryAdapter<D, J> targetAdapter = targetEntry.getResourceRepository();
-			JsonApiResponse response = targetAdapter.findAll(targetIds, context.createQueryAdapter(idQuerySpec));
+			ResourceRepositoryAdapter targetAdapter = targetEntry.getResourceRepository();
+			JsonApiResponse response = targetAdapter.findAll(targetIds, context.createQueryAdapter(idQuerySpec)).get();
 			targets = (List<D>) response.getEntity();
 			return toResult(field, targetInformation, sources, targets);
 		}

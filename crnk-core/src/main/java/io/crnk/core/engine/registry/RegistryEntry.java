@@ -17,9 +17,12 @@ import io.crnk.core.engine.information.resource.ResourceField;
 import io.crnk.core.engine.information.resource.ResourceInformation;
 import io.crnk.core.engine.internal.exception.ExceptionMapperRegistry;
 import io.crnk.core.engine.internal.repository.RelationshipRepositoryAdapter;
+import io.crnk.core.engine.internal.repository.RelationshipRepositoryAdapterImpl;
 import io.crnk.core.engine.internal.repository.ResourceRepositoryAdapter;
+import io.crnk.core.engine.internal.repository.ResourceRepositoryAdapterImpl;
 import io.crnk.core.engine.internal.utils.PreconditionUtil;
 import io.crnk.core.engine.query.QueryAdapter;
+import io.crnk.core.engine.result.Result;
 import io.crnk.core.exception.RelationshipRepositoryNotFoundException;
 import io.crnk.core.exception.ResourceFieldNotFoundException;
 import io.crnk.core.module.ModuleRegistry;
@@ -81,7 +84,7 @@ public class RegistryEntry {
 		}
 
 		ResourceInformation resourceInformation = getResourceInformation();
-		return new ResourceRepositoryAdapter(resourceInformation, moduleRegistry, repoInstance);
+		return new ResourceRepositoryAdapterImpl(resourceInformation, moduleRegistry, repoInstance);
 	}
 
 	public RelationshipRepositoryAdapter getRelationshipRepository(String fieldName, RepositoryMethodParameterProvider
@@ -114,7 +117,7 @@ public class RegistryEntry {
 			((ResourceRegistryAware) repoInstance).setResourceRegistry(moduleRegistry.getResourceRegistry());
 		}
 
-		return new RelationshipRepositoryAdapter(getResourceInformation(), moduleRegistry, repoInstance);
+		return new RelationshipRepositoryAdapterImpl(getResourceInformation(), moduleRegistry, repoInstance);
 	}
 
 	public ResourceInformation getResourceInformation() {
@@ -238,35 +241,36 @@ public class RegistryEntry {
 		private QueryAdapter toAdapter(QuerySpec querySpec) {
 			return new QuerySpecAdapter(querySpec, moduleRegistry.getResourceRegistry());
 		}
-	}
 
 
-	private ResourceList toResources(JsonApiResponse response) {
-		Collection elements = (Collection) toResource(response);
+		private ResourceList toResources(Result<JsonApiResponse> responseResult) {
+			JsonApiResponse response = responseResult.get();
+			Collection elements = (Collection) toResource(responseResult);
 
-		DefaultResourceList result = new DefaultResourceList();
-		result.addAll(elements);
-		result.setMeta(response.getMetaInformation());
-		result.setLinks(response.getLinksInformation());
-		return result;
-	}
-
-	private Object toResource(JsonApiResponse response) {
-		if (response.getErrors() != null && response.getErrors().iterator().hasNext()) {
-
-			List<ErrorData> errorList = new ArrayList<>();
-			response.getErrors().forEach(it -> errorList.add(it));
-			Optional<Integer> errorCode = errorList.stream().filter(it -> it.getStatus() != null)
-					.map(it -> Integer.parseInt(it.getStatus()))
-					.collect(Collectors.maxBy(Integer::compare));
-
-			ErrorResponse errorResponse = new ErrorResponse(errorList, errorCode.get());
-
-			ExceptionMapperRegistry exceptionMapperRegistry = moduleRegistry.getExceptionMapperRegistry();
-			ExceptionMapper<Throwable> exceptionMapper = exceptionMapperRegistry.findMapperFor(errorResponse).get();
-			return exceptionMapper.fromErrorResponse(errorResponse);
+			DefaultResourceList result = new DefaultResourceList();
+			result.addAll(elements);
+			result.setMeta(response.getMetaInformation());
+			result.setLinks(response.getLinksInformation());
+			return result;
 		}
-		return response.getEntity();
 
+		private Object toResource(Result<JsonApiResponse> responseResult) {
+			JsonApiResponse response = responseResult.get();
+			if (response.getErrors() != null && response.getErrors().iterator().hasNext()) {
+
+				List<ErrorData> errorList = new ArrayList<>();
+				response.getErrors().forEach(it -> errorList.add(it));
+				Optional<Integer> errorCode = errorList.stream().filter(it -> it.getStatus() != null)
+						.map(it -> Integer.parseInt(it.getStatus()))
+						.collect(Collectors.maxBy(Integer::compare));
+
+				ErrorResponse errorResponse = new ErrorResponse(errorList, errorCode.get());
+
+				ExceptionMapperRegistry exceptionMapperRegistry = moduleRegistry.getExceptionMapperRegistry();
+				ExceptionMapper<Throwable> exceptionMapper = exceptionMapperRegistry.findMapperFor(errorResponse).get();
+				return exceptionMapper.fromErrorResponse(errorResponse);
+			}
+			return response.getEntity();
+		}
 	}
 }

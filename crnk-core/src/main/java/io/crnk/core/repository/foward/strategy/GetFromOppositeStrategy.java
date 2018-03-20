@@ -52,8 +52,8 @@ public class GetFromOppositeStrategy<T, I extends Serializable, D, J extends Ser
 						FilterOperator.EQ, sourceIds));
 		idQuerySpec.includeRelation(Arrays.asList(oppositeField.getUnderlyingName()));
 
-		ResourceRepositoryAdapter<D, J> targetAdapter = targetEntry.getResourceRepository();
-		JsonApiResponse response = targetAdapter.findAll(context.createQueryAdapter(idQuerySpec));
+		ResourceRepositoryAdapter targetAdapter = targetEntry.getResourceRepository();
+		JsonApiResponse response = targetAdapter.findAll(context.createQueryAdapter(idQuerySpec)).get();
 		Collection<D> results = (Collection<D>) response.getEntity();
 
 		MultivaluedMap<I, D> bulkResult = new MultivaluedMap<I, D>() {

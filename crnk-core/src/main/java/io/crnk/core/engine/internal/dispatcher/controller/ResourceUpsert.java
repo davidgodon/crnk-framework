@@ -1,5 +1,18 @@
 package io.crnk.core.engine.internal.dispatcher.controller;
 
+import java.io.IOException;
+import java.io.Serializable;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
+
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,7 +27,11 @@ import io.crnk.core.engine.filter.ResourceFilterDirectory;
 import io.crnk.core.engine.filter.ResourceModificationFilter;
 import io.crnk.core.engine.filter.ResourceRelationshipModificationType;
 import io.crnk.core.engine.http.HttpMethod;
-import io.crnk.core.engine.information.resource.*;
+import io.crnk.core.engine.information.resource.AnyResourceFieldAccessor;
+import io.crnk.core.engine.information.resource.ResourceField;
+import io.crnk.core.engine.information.resource.ResourceFieldAccess;
+import io.crnk.core.engine.information.resource.ResourceInformation;
+import io.crnk.core.engine.information.resource.ResourceInstanceBuilder;
 import io.crnk.core.engine.internal.dispatcher.path.JsonPath;
 import io.crnk.core.engine.internal.utils.ClassUtils;
 import io.crnk.core.engine.internal.utils.PreconditionUtil;
@@ -32,12 +49,6 @@ import io.crnk.core.exception.RequestBodyException;
 import io.crnk.core.exception.ResourceException;
 import io.crnk.core.repository.response.JsonApiResponse;
 import io.crnk.legacy.internal.RepositoryMethodParameterProvider;
-
-import java.io.IOException;
-import java.io.Serializable;
-import java.lang.reflect.Type;
-import java.util.*;
-import java.util.Map.Entry;
 
 public abstract class ResourceUpsert extends ResourceIncludeField {
 
@@ -105,7 +116,7 @@ public abstract class ResourceUpsert extends ResourceIncludeField {
 	}
 
 	private void setAttribute(ResourceInformation resourceInformation, Object instance, String attributeName,
-							  JsonNode valueNode) {
+			JsonNode valueNode) {
 		ResourceField field = resourceInformation.findAttributeFieldByName(attributeName);
 		if (canModifyField(resourceInformation, attributeName, field)) {
 			ObjectMapper objectMapper = context.getObjectMapper();
@@ -118,14 +129,16 @@ public abstract class ResourceUpsert extends ResourceIncludeField {
 						JavaType jacksonValueType = objectMapper.getTypeFactory().constructType(valueType);
 						ObjectReader reader = objectMapper.reader().forType(jacksonValueType);
 						value = reader.readValue(valueNode);
-					} else {
+					}
+					else {
 						value = null;
 					}
 					for (ResourceModificationFilter filter : modificationFilters) {
 						value = filter.modifyAttribute(instance, field, attributeName, value);
 					}
 					field.getAccessor().setValue(instance, value);
-				} else if (resourceInformation.getAnyFieldAccessor() != null) {
+				}
+				else if (resourceInformation.getAnyFieldAccessor() != null) {
 					AnyResourceFieldAccessor anyFieldAccessor = resourceInformation.getAnyFieldAccessor();
 					Object value = objectMapper.reader().forType(Object.class).readValue(valueNode);
 					for (ResourceModificationFilter filter : modificationFilters) {
@@ -133,7 +146,8 @@ public abstract class ResourceUpsert extends ResourceIncludeField {
 					}
 					anyFieldAccessor.setValue(instance, attributeName, value);
 				}
-			} catch (IOException e) {
+			}
+			catch (IOException e) {
 				throw new ResourceException(
 						String.format("Exception while setting %s.%s=%s due to %s", instance, attributeName, valueNode,
 								e.getMessage()), e);
@@ -160,9 +174,11 @@ public abstract class ResourceUpsert extends ResourceIncludeField {
 
 		if (filterBehavior == FilterBehavior.NONE) {
 			return true;
-		} else if (filterBehavior == FilterBehavior.FORBIDDEN) {
+		}
+		else if (filterBehavior == FilterBehavior.FORBIDDEN) {
 			throw new ForbiddenException("field '" + fieldName + "' cannot be modified");
-		} else {
+		}
+		else {
 			PreconditionUtil.assertEquals("unknown behavior", FilterBehavior.IGNORED, filterBehavior);
 			return false;
 		}
@@ -220,7 +236,8 @@ public abstract class ResourceUpsert extends ResourceIncludeField {
 								entry,
 								queryAdapter,
 								parameterProvider);
-					} else {
+					}
+					else {
 						//noinspection unchecked
 						result = setRelationFieldAsync(newResource, registryEntry, relationshipName, relationship, queryAdapter,
 								parameterProvider);
@@ -233,12 +250,12 @@ public abstract class ResourceUpsert extends ResourceIncludeField {
 		}
 
 		ResultFactory resultFactory = context.getResultFactory();
-		return resultFactory.all(results);
+		return resultFactory.all((List) results);
 	}
 
 	protected Optional<Result> setRelationsFieldAsync(Object newResource, RegistryEntry registryEntry,
-													  Map.Entry<String, Relationship> property, QueryAdapter queryAdapter,
-													  RepositoryMethodParameterProvider parameterProvider) {
+			Map.Entry<String, Relationship> property, QueryAdapter queryAdapter,
+			RepositoryMethodParameterProvider parameterProvider) {
 		Relationship relationship = property.getValue();
 		if (relationship.getData().isPresent()) {
 			String propertyName = property.getKey();
@@ -272,7 +289,7 @@ public abstract class ResourceUpsert extends ResourceIncludeField {
 
 			// FIXME batch fetchRelatedObject
 			if (decideSetRelationObjectsField(relationshipField)) {
-				List<Result> relatedResults = new ArrayList<>();
+				List<Result<Object>> relatedResults = new ArrayList<>();
 				for (int i = 0; i < relationshipIds.size(); i++) {
 					ResourceIdentifier resourceId = relationshipIds.get(i);
 					Serializable typedRelationshipId = (Serializable) relationshipTypedIds.get(i);
@@ -296,8 +313,8 @@ public abstract class ResourceUpsert extends ResourceIncludeField {
 	}
 
 	protected Optional<Result> setRelationFieldAsync(Object newResource, RegistryEntry registryEntry,
-													 String relationshipName, Relationship relationship, QueryAdapter queryAdapter,
-													 RepositoryMethodParameterProvider parameterProvider) {
+			String relationshipName, Relationship relationship, QueryAdapter queryAdapter,
+			RepositoryMethodParameterProvider parameterProvider) {
 
 		if (relationship.getData().isPresent()) {
 			ResourceIdentifier relationshipId = (ResourceIdentifier) relationship.getData().get();
@@ -315,7 +332,8 @@ public abstract class ResourceUpsert extends ResourceIncludeField {
 
 			if (relationshipId == null) {
 				field.getAccessor().setValue(newResource, null);
-			} else {
+			}
+			else {
 				ResourceRegistry resourceRegistry = context.getResourceRegistry();
 				RegistryEntry entry = resourceRegistry.getEntry(relationshipId.getType());
 				Class idFieldType = entry.getResourceInformation()
@@ -350,8 +368,8 @@ public abstract class ResourceUpsert extends ResourceIncludeField {
 	}
 
 	protected Result<Object> fetchRelated(RegistryEntry entry, Serializable relationId,
-										  RepositoryMethodParameterProvider parameterProvider,
-										  QueryAdapter queryAdapter) {
+			RepositoryMethodParameterProvider parameterProvider,
+			QueryAdapter queryAdapter) {
 		return entry.getResourceRepository(parameterProvider).findOne(relationId, queryAdapter)
 				.map(JsonApiResponse::getEntity);
 	}

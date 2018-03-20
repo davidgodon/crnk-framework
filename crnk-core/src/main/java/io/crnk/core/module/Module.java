@@ -15,6 +15,7 @@ import io.crnk.core.engine.registry.RegistryEntry;
 import io.crnk.core.engine.registry.RegistryEntryBuilder;
 import io.crnk.core.engine.registry.ResourceRegistry;
 import io.crnk.core.engine.registry.ResourceRegistryPart;
+import io.crnk.core.engine.result.ResultFactory;
 import io.crnk.core.engine.security.SecurityProvider;
 import io.crnk.core.module.discovery.ResourceLookup;
 import io.crnk.core.module.discovery.ServiceDiscovery;
@@ -51,8 +52,6 @@ public interface Module {
 
 		/**
 		 * Adds the given extension
-		 *
-		 * @param extension
 		 */
 		void addExtension(ModuleExtension extension);
 
@@ -115,7 +114,7 @@ public interface Module {
 		 * Adds the given repository for the given type.
 		 *
 		 * @param resourceClass resource class
-		 * @param repository    resource
+		 * @param repository resource
 		 * @deprecated use {@link #addRepository(Object)}
 		 */
 		@Deprecated
@@ -126,7 +125,7 @@ public interface Module {
 		 *
 		 * @param sourceResourceClass source resource class
 		 * @param targetResourceClass target resource class
-		 * @param repository          resource
+		 * @param repository resource
 		 * @deprecated use {@link #addRepository(Object)}
 		 */
 		@Deprecated
@@ -155,15 +154,11 @@ public interface Module {
 
 		/**
 		 * Adds a repository filter to intercept repository calls.
-		 *
-		 * @param filter
 		 */
 		void addRepositoryFilter(RepositoryFilter filter);
 
 		/**
 		 * Adds a resource filter to manage access to resources and fields.
-		 *
-		 * @param filter
 		 */
 		void addResourceFilter(ResourceFilter filter);
 
@@ -223,6 +218,8 @@ public interface Module {
 
 		void addResourceModificationFilter(ResourceModificationFilter filter);
 
-		<T> List<T> getInstancesByType(Class<T> clazz);
+		ResultFactory getResultFactory();
+
+		List<DocumentFilter> getDocumentFilters();
 	}
 }

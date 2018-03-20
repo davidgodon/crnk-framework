@@ -61,7 +61,8 @@ public class ImplicitOwnerBasedRelationshipRepository<T, I extends Serializable,
 		ResourceInformation sourceInformation = sourceEntry.getResourceInformation();
 
 		ResourceField field = sourceInformation.findFieldByUnderlyingName(fieldName);
-		List sources = (List) sourceEntry.getResourceRepository().findAll(sourceIds, getSaveQueryAdapter(fieldName)).getEntity();
+		List sources =
+				(List) sourceEntry.getResourceRepository().findAll(sourceIds, getSaveQueryAdapter(fieldName)).get().getEntity();
 
 		ResourceInformation targetInformation = getTargetInformation(field);
 
@@ -79,8 +80,9 @@ public class ImplicitOwnerBasedRelationshipRepository<T, I extends Serializable,
 			}
 
 			QuerySpec idQuerySpec = new QuerySpec(targetInformation);
-			ResourceRepositoryAdapter<D, J> targetAdapter = getTargetEntry(field).getResourceRepository();
-			JsonApiResponse response = targetAdapter.findAll(targetIds, new QuerySpecAdapter(idQuerySpec, resourceRegistry));
+			ResourceRepositoryAdapter targetAdapter = getTargetEntry(field).getResourceRepository();
+			JsonApiResponse response =
+					targetAdapter.findAll(targetIds, new QuerySpecAdapter(idQuerySpec, resourceRegistry)).get();
 			targets = (List<D>) response.getEntity();
 			return toResult(fieldName, targetInformation, sources, targets);
 		}

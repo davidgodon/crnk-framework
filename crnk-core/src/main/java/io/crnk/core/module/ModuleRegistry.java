@@ -1,7 +1,16 @@
 package io.crnk.core.module;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.crnk.core.engine.dispatcher.RequestDispatcher;
 import io.crnk.core.engine.error.ExceptionMapper;
 import io.crnk.core.engine.error.JsonApiExceptionMapper;
@@ -33,6 +42,8 @@ import io.crnk.core.engine.registry.RegistryEntry;
 import io.crnk.core.engine.registry.RegistryEntryBuilder;
 import io.crnk.core.engine.registry.ResourceRegistry;
 import io.crnk.core.engine.registry.ResourceRegistryPart;
+import io.crnk.core.engine.result.ResultFactory;
+import io.crnk.core.engine.result.SimpleResultFactory;
 import io.crnk.core.engine.security.SecurityProvider;
 import io.crnk.core.module.Module.ModuleContext;
 import io.crnk.core.module.discovery.MultiResourceLookup;
@@ -48,15 +59,6 @@ import io.crnk.core.utils.Prioritizable;
 import io.crnk.legacy.registry.DefaultResourceInformationProviderContext;
 import io.crnk.legacy.repository.ResourceRepository;
 import io.crnk.legacy.repository.annotations.JsonApiResourceRepository;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Container for setting up and holding {@link Module} instances;
@@ -737,6 +739,16 @@ public class ModuleRegistry {
 		@Override
 		public void addResourceModificationFilter(ResourceModificationFilter filter) {
 			aggregatedModule.addResourceModificationFilter(filter);
+		}
+
+		@Override
+		public ResultFactory getResultFactory() {
+			return new SimpleResultFactory(); // FIXME
+		}
+
+		@Override
+		public List<DocumentFilter> getDocumentFilters() {
+			return ModuleRegistry.this.getFilters();
 		}
 
 		@Override

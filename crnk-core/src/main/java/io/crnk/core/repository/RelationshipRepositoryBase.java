@@ -128,7 +128,7 @@ public class RelationshipRepositoryBase<T, I extends Serializable, D, J extends 
 	@Override
 	public void setRelation(T source, J targetId, String fieldName) {
 		RegistryEntry sourceEntry = getSourceEntry();
-		ResourceRepositoryAdapter<T, I> sourceAdapter = sourceEntry.getResourceRepository();
+		ResourceRepositoryAdapter sourceAdapter = sourceEntry.getResourceRepository();
 		ResourceInformation sourceInformation = getSourceEntry().getResourceInformation();
 		ResourceField field = sourceInformation.findFieldByUnderlyingName(fieldName);
 		if (field.hasIdField()) {
@@ -145,7 +145,7 @@ public class RelationshipRepositoryBase<T, I extends Serializable, D, J extends 
 	@Override
 	public void setRelations(T source, Iterable<J> targetIds, String fieldName) {
 		RegistryEntry sourceEntry = getSourceEntry();
-		ResourceRepositoryAdapter<T, I> sourceAdapter = sourceEntry.getResourceRepository();
+		ResourceRepositoryAdapter sourceAdapter = sourceEntry.getResourceRepository();
 		ResourceInformation sourceInformation = getSourceEntry().getResourceInformation();
 		ResourceField field = sourceInformation.findFieldByUnderlyingName(fieldName);
 		if (field.hasIdField()) {
@@ -162,7 +162,7 @@ public class RelationshipRepositoryBase<T, I extends Serializable, D, J extends 
 	@Override
 	public void addRelations(T source, Iterable<J> targetIds, String fieldName) {
 		RegistryEntry sourceEntry = getSourceEntry();
-		ResourceRepositoryAdapter<T, I> sourceAdapter = sourceEntry.getResourceRepository();
+		ResourceRepositoryAdapter sourceAdapter = sourceEntry.getResourceRepository();
 		ResourceInformation sourceInformation = getSourceEntry().getResourceInformation();
 		ResourceField field = sourceInformation.findFieldByUnderlyingName(fieldName);
 		if (field.hasIdField()) {
@@ -184,7 +184,7 @@ public class RelationshipRepositoryBase<T, I extends Serializable, D, J extends 
 	@Override
 	public void removeRelations(T source, Iterable<J> targetIds, String fieldName) {
 		RegistryEntry sourceEntry = getSourceEntry();
-		ResourceRepositoryAdapter<T, I> sourceAdapter = sourceEntry.getResourceRepository();
+		ResourceRepositoryAdapter sourceAdapter = sourceEntry.getResourceRepository();
 		ResourceInformation sourceInformation = getSourceEntry().getResourceInformation();
 		ResourceField field = sourceInformation.findFieldByUnderlyingName(fieldName);
 		if (field.hasIdField()) {
@@ -244,9 +244,9 @@ public class RelationshipRepositoryBase<T, I extends Serializable, D, J extends 
 		if (targetId == null) {
 			return null;
 		}
-		ResourceRepositoryAdapter<D, J> targetAdapter = entry.getResourceRepository();
+		ResourceRepositoryAdapter targetAdapter = entry.getResourceRepository();
 		QueryAdapter queryAdapter = new QuerySpecAdapter(new QuerySpec(entry.getResourceInformation()), resourceRegistry);
-		D target = (D) targetAdapter.findOne(targetId, queryAdapter).getEntity();
+		D target = (D) targetAdapter.findOne(targetId, queryAdapter).get().getEntity();
 		if (target == null) {
 			throw new IllegalStateException(targetId + " not found");
 		}
@@ -255,9 +255,9 @@ public class RelationshipRepositoryBase<T, I extends Serializable, D, J extends 
 
 	@SuppressWarnings("unchecked")
 	protected Iterable<D> getTargets(RegistryEntry entry, Iterable<J> targetIds) {
-		ResourceRepositoryAdapter<D, J> targetAdapter = entry.getResourceRepository();
+		ResourceRepositoryAdapter targetAdapter = entry.getResourceRepository();
 		QueryAdapter queryAdapter = new QuerySpecAdapter(new QuerySpec(entry.getResourceInformation()), resourceRegistry);
-		return (Iterable<D>) targetAdapter.findAll(targetIds, queryAdapter).getEntity();
+		return (Iterable<D>) targetAdapter.findAll(targetIds, queryAdapter).get().getEntity();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -275,8 +275,8 @@ public class RelationshipRepositoryBase<T, I extends Serializable, D, J extends 
 						.EQ, sourceIds));
 		idQuerySpec.includeRelation(Arrays.asList(oppositeName));
 
-		ResourceRepositoryAdapter<D, J> targetAdapter = targetEntry.getResourceRepository();
-		JsonApiResponse response = targetAdapter.findAll(new QuerySpecAdapter(idQuerySpec, resourceRegistry));
+		ResourceRepositoryAdapter targetAdapter = targetEntry.getResourceRepository();
+		JsonApiResponse response = targetAdapter.findAll(new QuerySpecAdapter(idQuerySpec, resourceRegistry)).get();
 		List<D> results = (List<D>) response.getEntity();
 
 		MultivaluedMap<I, D> bulkResult = new MultivaluedMap<I, D>() {

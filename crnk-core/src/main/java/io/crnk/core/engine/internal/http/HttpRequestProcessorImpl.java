@@ -1,5 +1,10 @@
 package io.crnk.core.engine.internal.http;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import io.crnk.core.engine.dispatcher.RequestDispatcher;
 import io.crnk.core.engine.dispatcher.Response;
 import io.crnk.core.engine.document.Document;
@@ -13,15 +18,9 @@ import io.crnk.core.engine.internal.dispatcher.path.JsonPath;
 import io.crnk.core.engine.internal.dispatcher.path.PathBuilder;
 import io.crnk.core.engine.internal.exception.ExceptionMapperRegistry;
 import io.crnk.core.engine.internal.utils.PreconditionUtil;
+import io.crnk.core.engine.result.Result;
 import io.crnk.core.module.ModuleRegistry;
 import io.crnk.legacy.internal.RepositoryMethodParameterProvider;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Future;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,8 +45,9 @@ public class HttpRequestProcessorImpl implements RequestDispatcher {
 		this.moduleRegistry.setRequestDispatcher(this);
 	}
 
+	/*
 	@Override
-	public Future<Void> processAsync(HttpRequestContextBase requestContextBase) throws IOException {
+	public Result processAsync(HttpRequestContextBase requestContextBase) throws IOException {
 		HttpRequestContextBaseAdapter requestContext = new HttpRequestContextBaseAdapter(requestContextBase);
 		HttpRequestContextProvider httpRequestContextProvider = moduleRegistry.getHttpRequestContextProvider();
 		try {
@@ -60,13 +60,15 @@ public class HttpRequestProcessorImpl implements RequestDispatcher {
 				}
 			}
 			return null;
-		} finally {
+		}
+		finally {
 			// FIXME reactive  httpRequestContextProvider.onRequestFinished();
 		}
 	}
+	*/
 
 	@Override
-	public void process(HttpRequestContextBase requestContextBase) throws IOException {
+	public Result process(HttpRequestContextBase requestContextBase) throws IOException {
 		HttpRequestContextBaseAdapter requestContext = new HttpRequestContextBaseAdapter(requestContextBase);
 		HttpRequestContextProvider httpRequestContextProvider = moduleRegistry.getHttpRequestContextProvider();
 		try {
@@ -80,7 +82,9 @@ public class HttpRequestProcessorImpl implements RequestDispatcher {
 					break;
 				}
 			}
-		} finally {
+			return null;
+		}
+		finally {
 			httpRequestContextProvider.onRequestFinished();
 		}
 	}
@@ -88,11 +92,13 @@ public class HttpRequestProcessorImpl implements RequestDispatcher {
 	@Override
 	@Deprecated
 	public Response dispatchRequest(String path, String method, Map<String, Set<String>> parameters,
-									RepositoryMethodParameterProvider parameterProvider,
-									Document requestBody) {
+			RepositoryMethodParameterProvider parameterProvider,
+			Document requestBody) {
 
 		List<HttpRequestProcessor> processors = moduleRegistry.getHttpRequestProcessors();
-		JsonApiRequestProcessor processor = (JsonApiRequestProcessor) processors.stream().filter(it -> it instanceof JsonApiRequestProcessor).findFirst().get();
+		JsonApiRequestProcessor processor =
+				(JsonApiRequestProcessor) processors.stream().filter(it -> it instanceof JsonApiRequestProcessor).findFirst()
+						.get();
 
 		JsonPath jsonPath = new PathBuilder(moduleRegistry.getResourceRegistry()).build(path);
 
@@ -123,7 +129,8 @@ public class HttpRequestProcessorImpl implements RequestDispatcher {
 			List<DocumentFilter> filters = moduleRegistry.getFilters();
 			if (filterIndex == filters.size()) {
 				return null;
-			} else {
+			}
+			else {
 				DocumentFilter filter = filters.get(filterIndex);
 				filterIndex++;
 				return filter.filter(context, this);

@@ -1,13 +1,13 @@
 package io.crnk.core.engine.internal.http;
 
+import java.util.List;
+
 import io.crnk.core.engine.dispatcher.Response;
 import io.crnk.core.engine.filter.DocumentFilter;
 import io.crnk.core.engine.filter.DocumentFilterChain;
 import io.crnk.core.engine.filter.DocumentFilterContext;
 import io.crnk.core.engine.internal.dispatcher.controller.BaseController;
 import io.crnk.core.module.Module;
-
-import java.util.List;
 
 class DocumentFilterChainImpl implements DocumentFilterChain {
 
@@ -23,7 +23,7 @@ class DocumentFilterChainImpl implements DocumentFilterChain {
 
 	@Override
 	public Response doFilter(DocumentFilterContext context) {
-		List<DocumentFilter> filters = moduleContext.getInstancesByType(DocumentFilter.class);
+		List<DocumentFilter> filters = moduleContext.getDocumentFilters();
 		if (filterIndex == filters.size()) {
 			return controller.handle(context.getJsonPath(), context.getQueryAdapter(), context.getParameterProvider(),
 					context.getRequestBody());

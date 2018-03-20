@@ -1,16 +1,16 @@
 package io.crnk.core.engine.internal.http;
 
-import io.crnk.core.engine.http.HttpHeaders;
-import io.crnk.core.engine.http.HttpRequestContext;
-import io.crnk.core.engine.http.HttpRequestContextBase;
-import io.crnk.core.engine.internal.utils.ExceptionUtil;
-import io.crnk.legacy.internal.RepositoryMethodParameterProvider;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+
+import io.crnk.core.engine.http.HttpHeaders;
+import io.crnk.core.engine.http.HttpRequestContext;
+import io.crnk.core.engine.http.HttpRequestContextBase;
+import io.crnk.core.engine.internal.utils.ExceptionUtil;
+import io.crnk.legacy.internal.RepositoryMethodParameterProvider;
 
 public class HttpRequestContextBaseAdapter implements HttpRequestContext {
 
@@ -49,7 +49,7 @@ public class HttpRequestContextBaseAdapter implements HttpRequestContext {
 	}
 
 	@Override
-	public void setResponse(final int statusCode, final String text) throws IOException {
+	public void setResponse(final int statusCode, final String text) {
 		hasResponse = true;
 
 		ExceptionUtil.wrapCatchedExceptions(new Callable<Object>() {
@@ -146,7 +146,7 @@ public class HttpRequestContextBaseAdapter implements HttpRequestContext {
 	}
 
 	@Override
-	public byte[] getRequestBody() throws IOException {
+	public byte[] getRequestBody() {
 		return base.getRequestBody();
 	}
 

@@ -1,5 +1,8 @@
 package io.crnk.core.engine.internal.dispatcher.controller;
 
+import java.util.List;
+import java.util.Objects;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.crnk.core.engine.filter.ResourceFilterDirectory;
 import io.crnk.core.engine.filter.ResourceModificationFilter;
@@ -8,49 +11,38 @@ import io.crnk.core.engine.parser.TypeParser;
 import io.crnk.core.engine.properties.PropertiesProvider;
 import io.crnk.core.engine.registry.ResourceRegistry;
 import io.crnk.core.engine.result.ResultFactory;
-
-import java.util.List;
+import io.crnk.core.module.ModuleRegistry;
 
 public class ControllerContext {
 
-	private ResourceRegistry resourceRegistry;
-
-	private PropertiesProvider propertiesProvider;
-
-	private TypeParser typeParser;
-
-
-	private ObjectMapper objectMapper;
+	private final ModuleRegistry moduleRegistry;
 
 	private DocumentMapper documentMapper;
 
-	private List<ResourceModificationFilter> modificationFilters;
 
-	private ResultFactory resultFactory;
-
-	private ResourceFilterDirectory resourceFilterDirectory;
-
-	//  FIXME 	this.resourceFilterDirectory = documentMapper != null ? documentMapper.getFilterBehaviorManager() : null;
-
+	public ControllerContext(ModuleRegistry moduleRegistry, DocumentMapper documentMapper) {
+		this.moduleRegistry = Objects.requireNonNull(moduleRegistry);
+		this.documentMapper = Objects.requireNonNull(documentMapper);
+	}
 
 	public ResourceFilterDirectory getResourceFilterDirectory() {
-		return resourceFilterDirectory;
+		return moduleRegistry.getContext().getResourceFilterDirectory();
 	}
 
 	public ResourceRegistry getResourceRegistry() {
-		return resourceRegistry;
+		return moduleRegistry.getResourceRegistry();
 	}
 
 	public PropertiesProvider getPropertiesProvider() {
-		return propertiesProvider;
+		return moduleRegistry.getPropertiesProvider();
 	}
 
 	public TypeParser getTypeParser() {
-		return typeParser;
+		return moduleRegistry.getTypeParser();
 	}
 
 	public ObjectMapper getObjectMapper() {
-		return objectMapper;
+		return moduleRegistry.getContext().getObjectMapper();
 	}
 
 	public DocumentMapper getDocumentMapper() {
@@ -58,11 +50,11 @@ public class ControllerContext {
 	}
 
 	public List<ResourceModificationFilter> getModificationFilters() {
-		return modificationFilters;
+		return moduleRegistry.getResourceModificationFilters();
 	}
 
 	public ResultFactory getResultFactory() {
-		return resultFactory;
+		return moduleRegistry.getContext().getResultFactory();
 	}
 
 }
