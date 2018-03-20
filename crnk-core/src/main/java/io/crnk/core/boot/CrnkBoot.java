@@ -273,8 +273,6 @@ public class CrnkBoot {
 	}
 
 	protected ControllerRegistry createControllerRegistry() {
-
-
 		Set<BaseController> controllers = new HashSet<>();
 		controllers.add(new RelationshipsResourceDelete());
 		controllers.add(new RelationshipsResourcePatch());
@@ -288,7 +286,7 @@ public class CrnkBoot {
 		controllers.add(new ResourcePatch());
 		controllers.add(new ResourcePost());
 
-		ControllerContext context = new ControllerContext(moduleRegistry, documentMapper);
+		ControllerContext context = new ControllerContext(moduleRegistry, this::getDocumentMapper);
 		for (BaseController controller : controllers) {
 			controller.init(context);
 		}

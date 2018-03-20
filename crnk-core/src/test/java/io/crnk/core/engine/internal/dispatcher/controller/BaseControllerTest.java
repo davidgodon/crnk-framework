@@ -95,7 +95,7 @@ public abstract class BaseControllerTest {
 		typeParser = moduleRegistry.getTypeParser();
 		documentMapper = boot.getDocumentMapper();
 
-		controllerContext = new ControllerContext(moduleRegistry, documentMapper);
+		controllerContext = new ControllerContext(moduleRegistry, () -> documentMapper);
 
 		MockRepositoryUtil.clear();
 

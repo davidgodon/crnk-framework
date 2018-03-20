@@ -12,17 +12,18 @@ import io.crnk.core.engine.properties.PropertiesProvider;
 import io.crnk.core.engine.registry.ResourceRegistry;
 import io.crnk.core.engine.result.ResultFactory;
 import io.crnk.core.module.ModuleRegistry;
+import io.crnk.core.utils.Supplier;
 
 public class ControllerContext {
 
 	private final ModuleRegistry moduleRegistry;
 
-	private DocumentMapper documentMapper;
+	private Supplier<DocumentMapper> documentMapper;
 
 
-	public ControllerContext(ModuleRegistry moduleRegistry, DocumentMapper documentMapper) {
+	public ControllerContext(ModuleRegistry moduleRegistry, Supplier<DocumentMapper> documentMapper) {
 		this.moduleRegistry = Objects.requireNonNull(moduleRegistry);
-		this.documentMapper = Objects.requireNonNull(documentMapper);
+		this.documentMapper = documentMapper;
 	}
 
 	public ResourceFilterDirectory getResourceFilterDirectory() {
@@ -46,7 +47,7 @@ public class ControllerContext {
 	}
 
 	public DocumentMapper getDocumentMapper() {
-		return documentMapper;
+		return documentMapper.get();
 	}
 
 	public List<ResourceModificationFilter> getModificationFilters() {

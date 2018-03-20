@@ -14,6 +14,7 @@ import io.crnk.core.engine.dispatcher.Response;
 import io.crnk.core.engine.document.Document;
 import io.crnk.core.engine.document.Resource;
 import io.crnk.core.engine.document.ResourceIdentifier;
+import io.crnk.core.engine.information.resource.ResourceInformation;
 import io.crnk.core.engine.internal.dispatcher.controller.BaseControllerTest;
 import io.crnk.core.engine.internal.dispatcher.controller.RelationshipsResourcePost;
 import io.crnk.core.engine.internal.dispatcher.controller.ResourceGet;
@@ -139,7 +140,9 @@ public class ResourceGetTest extends BaseControllerTest {
 		QueryParams queryParamsObject = new QueryParamsBuilder(new DefaultQueryParamsParser()).buildQueryParams(queryParams);
 
 		// WHEN
-		Response response = responseGetResp.handle(jsonPath, new QueryParamsAdapter(resourceRegistry.getEntry(TaskWithLookup.class).getResourceInformation(), queryParamsObject, moduleRegistry), null, null);
+		ResourceInformation resourceInformation = resourceRegistry.getEntry(TaskWithLookup.class).getResourceInformation();
+		QueryParamsAdapter queryParamsAdapter = new QueryParamsAdapter(resourceInformation, queryParamsObject, moduleRegistry);
+		Response response = responseGetResp.handle(jsonPath, queryParamsAdapter, null, null);
 
 		// THEN
 		Assert.assertNotNull(response);
