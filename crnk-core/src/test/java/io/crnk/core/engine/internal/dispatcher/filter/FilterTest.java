@@ -7,6 +7,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import io.crnk.core.boot.CrnkBoot;
 import io.crnk.core.engine.dispatcher.RequestDispatcher;
 import io.crnk.core.engine.document.Document;
@@ -25,30 +29,31 @@ import io.crnk.core.mock.MockConstants;
 import io.crnk.core.module.ModuleRegistry;
 import io.crnk.core.module.SimpleModule;
 import io.crnk.core.module.discovery.ReflectionsServiceDiscovery;
-import io.crnk.core.queryspec.DefaultQuerySpecDeserializer;
-import io.crnk.core.queryspec.internal.QuerySpecAdapterBuilder;
 import io.crnk.core.resource.registry.ResourceRegistryTest;
 import io.crnk.legacy.internal.RepositoryMethodParameterProvider;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 public class FilterTest {
 
 	String path = "/tasks/";
+
 	String requestType = "GET";
+
 	private ResourceRegistry resourceRegistry;
+
 	private TestFilter filter;
+
 	private RequestDispatcher dispatcher;
+
 	private CollectionGet collectionGet;
+
 	private PathBuilder pathBuilder;
+
 	private ModuleRegistry moduleRegistry;
+
 	private CrnkBoot boot;
 
 	@Before
@@ -72,8 +77,7 @@ public class FilterTest {
 		ControllerRegistry controllerRegistry = new ControllerRegistry(null);
 		collectionGet = mock(CollectionGet.class);
 		controllerRegistry.addController(collectionGet);
-		QuerySpecAdapterBuilder queryAdapterBuilder = new QuerySpecAdapterBuilder(new DefaultQuerySpecDeserializer(), moduleRegistry);
-		dispatcher = new HttpRequestProcessorImpl(moduleRegistry, controllerRegistry, null, queryAdapterBuilder);
+		dispatcher = new HttpRequestProcessorImpl(moduleRegistry, null);
 	}
 
 	@Test
@@ -89,7 +93,9 @@ public class FilterTest {
 
 		// THEN
 		verify(filter).filter(captor.capture(), any(DocumentFilterChain.class));
-		verify(collectionGet, times(1)).handle(any(JsonPath.class), any(QueryAdapter.class), any(RepositoryMethodParameterProvider.class), any(Document.class));
+		verify(collectionGet, times(1))
+				.handle(any(JsonPath.class), any(QueryAdapter.class), any(RepositoryMethodParameterProvider.class),
+						any(Document.class));
 		verify(filter, times(1)).filter(any(DocumentFilterContext.class), any(DocumentFilterChain.class));
 
 		DocumentFilterContext value = captor.getValue();

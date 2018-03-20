@@ -1,5 +1,7 @@
 package io.crnk.core.engine.registry;
 
+import java.util.List;
+
 import io.crnk.core.boot.CrnkBoot;
 import io.crnk.core.engine.document.Resource;
 import io.crnk.core.engine.information.InformationBuilder;
@@ -12,11 +14,8 @@ import io.crnk.core.queryspec.QuerySpec;
 import io.crnk.core.queryspec.internal.QuerySpecAdapter;
 import io.crnk.core.queryspec.pagingspec.OffsetLimitPagingBehavior;
 import io.crnk.core.repository.response.JsonApiResponse;
-
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.List;
 
 public class CustomResourceRegistryTest {
 
@@ -34,7 +33,7 @@ public class CustomResourceRegistryTest {
 
 		QueryAdapter queryAdapter = new QuerySpecAdapter(new QuerySpec("somePrefix/custom"), resourceRegistry);
 
-		JsonApiResponse response = adapter.findAll(queryAdapter);
+		JsonApiResponse response = adapter.findAll(queryAdapter).get();
 		Assert.assertNotNull(response.getEntity());
 		List<Resource> resources = (List<Resource>) response.getEntity();
 		Assert.assertEquals(1, resources.size());

@@ -1,21 +1,9 @@
 package io.crnk.servlet;
 
-import io.crnk.core.boot.CrnkBoot;
-import io.crnk.core.engine.dispatcher.RequestDispatcher;
-import io.crnk.core.engine.http.HttpRequestContextProvider;
-import io.crnk.core.engine.internal.utils.PreconditionUtil;
-import io.crnk.servlet.internal.FilterPropertiesProvider;
-import io.crnk.servlet.internal.ServletModule;
-import io.crnk.servlet.internal.ServletPropertiesProvider;
-import io.crnk.servlet.internal.ServletRequestContext;
-
 import java.io.IOException;
 import javax.servlet.AsyncContext;
 import javax.servlet.AsyncEvent;
 import javax.servlet.AsyncListener;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
@@ -23,6 +11,14 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import io.crnk.core.boot.CrnkBoot;
+import io.crnk.core.engine.dispatcher.RequestDispatcher;
+import io.crnk.core.engine.http.HttpRequestContextProvider;
+import io.crnk.core.engine.internal.utils.PreconditionUtil;
+import io.crnk.servlet.internal.ServletModule;
+import io.crnk.servlet.internal.ServletPropertiesProvider;
+import io.crnk.servlet.internal.ServletRequestContext;
 
 /**
  * Async/reactive servlet filter class to integrate with Crnk.
@@ -69,7 +65,8 @@ public class AsyncCrnkServlet extends HttpServlet {
 
 	@Override
 	public void service(ServletRequest req, ServletResponse res) throws IOException, ServletException {
-		PreconditionUtil.assertTrue("only http supported, ", req instanceof HttpServletRequest && res instanceof HttpServletResponse);
+		PreconditionUtil
+				.assertTrue("only http supported, ", req instanceof HttpServletRequest && res instanceof HttpServletResponse);
 		final AsyncContext ctx = req.startAsync();
 		ctx.setTimeout(timeout);
 
@@ -77,7 +74,8 @@ public class AsyncCrnkServlet extends HttpServlet {
 		ServletRequestContext context = new ServletRequestContext(servletContext, (HttpServletRequest) req,
 				(HttpServletResponse) res, boot.getWebPathPrefix());
 		RequestDispatcher requestDispatcher = boot.getRequestDispatcher();
-		requestDispatcher.processAsync(context);
+
+		// FIXME		requestDispatcher.processAsync(context);
 
 		// attach listener to respond to lifecycle events of this AsyncContext
 		ctx.addListener(new AsyncListener() {

@@ -16,6 +16,7 @@ import io.crnk.core.engine.document.Resource;
 import io.crnk.core.engine.http.HttpHeaders;
 import io.crnk.core.engine.http.HttpMethod;
 import io.crnk.core.engine.internal.document.mapper.DocumentMapper;
+import io.crnk.core.engine.internal.document.mapper.DocumentMappingConfig;
 import io.crnk.core.engine.query.QueryAdapter;
 import io.crnk.core.exception.InternalServerErrorException;
 import io.crnk.core.queryspec.QuerySpec;
@@ -69,7 +70,8 @@ public class OperationsCall {
 
 		CrnkClient crnk = client.getCrnk();
 		DocumentMapper documentMapper = crnk.getDocumentMapper();
-		Document document = documentMapper.toDocument(response, queryAdapter);
+		DocumentMappingConfig mappingConfig = new DocumentMappingConfig();
+		Document document = documentMapper.toDocument(response, queryAdapter, mappingConfig).get();
 		return document.getSingleData().get();
 	}
 

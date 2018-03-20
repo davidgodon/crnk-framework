@@ -15,7 +15,7 @@ import org.junit.Test;
 
 public class TotalBasedPagedLinksInformationTest extends AbstractQuerySpecTest {
 
-	private ResourceRepositoryAdapter<Task, Long> adapter;
+	private ResourceRepositoryAdapter adapter;
 
 	@Before
 	public void setup() {
@@ -39,10 +39,10 @@ public class TotalBasedPagedLinksInformationTest extends AbstractQuerySpecTest {
 	}
 
 	@Test
-	public void testPaging() throws InstantiationException, IllegalAccessException {
+	public void testPaging() {
 		QuerySpecAdapter querySpec = new QuerySpecAdapter(querySpec(2L, 2L), resourceRegistry);
 
-		PagedLinksInformation linksInformation = (PagedLinksInformation) adapter.findAll(querySpec).getLinksInformation();
+		PagedLinksInformation linksInformation = (PagedLinksInformation) adapter.findAll(querySpec).get().getLinksInformation();
 		Assert.assertEquals("http://127.0.0.1/tasks?page[limit]=2", linksInformation.getFirst());
 		Assert.assertEquals("http://127.0.0.1/tasks?page[limit]=2&page[offset]=4", linksInformation.getLast());
 		Assert.assertEquals("http://127.0.0.1/tasks?page[limit]=2", linksInformation.getPrev());
@@ -50,12 +50,12 @@ public class TotalBasedPagedLinksInformationTest extends AbstractQuerySpecTest {
 	}
 
 	@Test
-	public void testPagingNoContents() throws InstantiationException, IllegalAccessException {
+	public void testPagingNoContents() {
 		TotalResourceCountTestRepository.clear();
 
 		QuerySpecAdapter querySpec = new QuerySpecAdapter(querySpec(0L, 2L), resourceRegistry);
 
-		PagedLinksInformation linksInformation = (PagedLinksInformation) adapter.findAll(querySpec).getLinksInformation();
+		PagedLinksInformation linksInformation = (PagedLinksInformation) adapter.findAll(querySpec).get().getLinksInformation();
 		Assert.assertNull(linksInformation.getFirst());
 		Assert.assertNull(linksInformation.getLast());
 		Assert.assertNull(linksInformation.getPrev());
@@ -63,10 +63,10 @@ public class TotalBasedPagedLinksInformationTest extends AbstractQuerySpecTest {
 	}
 
 	@Test
-	public void testPagingFirst() throws InstantiationException, IllegalAccessException {
+	public void testPagingFirst() {
 		QuerySpecAdapter querySpec = new QuerySpecAdapter(querySpec(0L, 3L), resourceRegistry);
 
-		PagedLinksInformation linksInformation = (PagedLinksInformation) adapter.findAll(querySpec).getLinksInformation();
+		PagedLinksInformation linksInformation = (PagedLinksInformation) adapter.findAll(querySpec).get().getLinksInformation();
 		Assert.assertEquals("http://127.0.0.1/tasks?page[limit]=3", linksInformation.getFirst());
 		Assert.assertEquals("http://127.0.0.1/tasks?page[limit]=3&page[offset]=3", linksInformation.getLast());
 		Assert.assertNull(linksInformation.getPrev());
@@ -74,10 +74,10 @@ public class TotalBasedPagedLinksInformationTest extends AbstractQuerySpecTest {
 	}
 
 	@Test
-	public void testPagingLast() throws InstantiationException, IllegalAccessException {
+	public void testPagingLast() {
 		QuerySpecAdapter querySpec = new QuerySpecAdapter(querySpec(4L, 4L), resourceRegistry);
 
-		PagedLinksInformation linksInformation = (PagedLinksInformation) adapter.findAll(querySpec).getLinksInformation();
+		PagedLinksInformation linksInformation = (PagedLinksInformation) adapter.findAll(querySpec).get().getLinksInformation();
 		Assert.assertEquals("http://127.0.0.1/tasks?page[limit]=4", linksInformation.getFirst());
 		Assert.assertEquals("http://127.0.0.1/tasks?page[limit]=4&page[offset]=4", linksInformation.getLast());
 		Assert.assertEquals("http://127.0.0.1/tasks?page[limit]=4", linksInformation.getFirst());
@@ -85,8 +85,8 @@ public class TotalBasedPagedLinksInformationTest extends AbstractQuerySpecTest {
 	}
 
 	@Test(expected = BadRequestException.class)
-	public void testInvalidPaging() throws InstantiationException, IllegalAccessException {
+	public void testInvalidPaging() {
 		QuerySpecAdapter querySpec = new QuerySpecAdapter(querySpec(1L, 3L), resourceRegistry);
-		adapter.findAll(querySpec).getLinksInformation();
+		adapter.findAll(querySpec).get().getLinksInformation();
 	}
 }

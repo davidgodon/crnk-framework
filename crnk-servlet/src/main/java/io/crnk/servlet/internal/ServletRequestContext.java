@@ -55,7 +55,7 @@ public class ServletRequestContext implements HttpRequestContextBase {
 	private String pathPrefix;
 
 	public ServletRequestContext(final ServletContext servletContext, final HttpServletRequest request,
-								 final HttpServletResponse response, String pathPrefix) {
+			final HttpServletResponse response, String pathPrefix) {
 		this.pathPrefix = pathPrefix;
 		this.servletContext = servletContext;
 		this.request = request;
@@ -130,14 +130,19 @@ public class ServletRequestContext implements HttpRequestContextBase {
 	}
 
 	@Override
-	public byte[] getRequestBody() throws IOException {
+	public byte[] getRequestBody() {
 		if (!requestBody.isPresent()) {
-
-			InputStream is = request.getInputStream();
-			if (is != null) {
-				requestBody = Nullable.of(io.crnk.core.engine.internal.utils.IOUtils.readFully(is));
-			} else {
-				requestBody = Nullable.nullValue();
+			try {
+				InputStream is = request.getInputStream();
+				if (is != null) {
+					requestBody = Nullable.of(io.crnk.core.engine.internal.utils.IOUtils.readFully(is));
+				}
+				else {
+					requestBody = Nullable.nullValue();
+				}
+			}
+			catch (IOException e) {
+				throw new IllegalStateException(e); // FIXME
 			}
 		}
 		return requestBody.get();

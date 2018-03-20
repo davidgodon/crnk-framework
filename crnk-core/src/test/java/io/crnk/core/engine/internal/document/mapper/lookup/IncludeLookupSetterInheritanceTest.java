@@ -74,7 +74,7 @@ public class IncludeLookupSetterInheritanceTest extends AbstractDocumentMapperTe
 		Task task = new Task();
 		task.setId(1L);
 
-		Document document = mapper.toDocument(toResponse(task), toAdapter(querySpec));
+		Document document = mapper.toDocument(toResponse(task), toAdapter(querySpec), mappingConfig).get();
 		Resource taskResource = document.getSingleData().get();
 
 		Relationship relationship = taskResource.getRelationships().get("includedProjects");

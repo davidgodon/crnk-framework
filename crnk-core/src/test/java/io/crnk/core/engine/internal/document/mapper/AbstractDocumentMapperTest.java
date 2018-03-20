@@ -33,14 +33,22 @@ public abstract class AbstractDocumentMapperTest {
 	protected ObjectMapper objectMapper;
 
 	protected ResourceFilterDirectory resourceFilterDirectory;
+
 	private ModuleRegistry moduleRegistry;
+
+
+	protected DocumentMappingConfig mappingConfig;
+
 
 	@Before
 	public void setup() {
 		MockRepositoryUtil.clear();
 
+		mappingConfig = new DocumentMappingConfig();
+
 		CrnkBoot boot = new CrnkBoot();
-		boot.setServiceDiscovery(new ReflectionsServiceDiscovery(String.format("%s,io.crnk.core.queryspec.pagingspec", MockConstants.TEST_MODELS_PACKAGE)));
+		boot.setServiceDiscovery(new ReflectionsServiceDiscovery(
+				String.format("%s,io.crnk.core.queryspec.pagingspec", MockConstants.TEST_MODELS_PACKAGE)));
 		boot.setServiceUrlProvider(new ConstantServiceUrlProvider(ResourceRegistryTest.TEST_MODELS_URL));
 		boot.setPropertiesProvider(getPropertiesProvider());
 		boot.boot();
@@ -62,7 +70,8 @@ public abstract class AbstractDocumentMapperTest {
 	}
 
 	protected QueryAdapter createAdapter(Class resourceClass) {
-		return new QueryParamsAdapter(resourceRegistry.getEntry(resourceClass).getResourceInformation(), new QueryParams(), moduleRegistry);
+		return new QueryParamsAdapter(resourceRegistry.getEntry(resourceClass).getResourceInformation(), new QueryParams(),
+				moduleRegistry);
 	}
 
 	protected QueryAdapter toAdapter(QuerySpec querySpec) {

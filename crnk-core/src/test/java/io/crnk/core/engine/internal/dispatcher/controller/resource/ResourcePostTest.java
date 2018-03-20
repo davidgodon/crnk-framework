@@ -1,5 +1,12 @@
 package io.crnk.core.engine.internal.dispatcher.controller.resource;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import io.crnk.core.boot.CrnkProperties;
 import io.crnk.core.engine.dispatcher.Response;
@@ -20,13 +27,17 @@ import io.crnk.core.engine.properties.ResourceFieldImmutableWriteBehavior;
 import io.crnk.core.engine.query.QueryAdapter;
 import io.crnk.core.engine.registry.RegistryEntry;
 import io.crnk.core.engine.registry.ResourceRegistry;
-import io.crnk.core.exception.*;
+import io.crnk.core.exception.ForbiddenException;
+import io.crnk.core.exception.RepositoryNotFoundException;
+import io.crnk.core.exception.RequestBodyException;
+import io.crnk.core.exception.RequestBodyNotFoundException;
+import io.crnk.core.exception.ResourceException;
 import io.crnk.core.mock.models.Pojo;
 import io.crnk.core.mock.models.Task;
-import io.crnk.core.mock.repository.PojoRepository;
 import io.crnk.core.mock.repository.TaskRepository;
 import io.crnk.core.queryspec.QuerySpec;
 import io.crnk.core.queryspec.internal.QuerySpecAdapter;
+import io.crnk.core.repository.ResourceRepositoryV2;
 import io.crnk.core.utils.Nullable;
 import io.crnk.legacy.internal.QueryParamsAdapter;
 import io.crnk.legacy.queryParams.DefaultQueryParamsParser;
@@ -37,13 +48,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 public class ResourcePostTest extends BaseControllerTest {
 
 	private static final String REQUEST_TYPE = "POST";
@@ -52,7 +56,8 @@ public class ResourcePostTest extends BaseControllerTest {
 	public void onGivenRequestCollectionGetShouldDenyIt() {
 		// GIVEN
 		JsonPath jsonPath = pathBuilder.build("/tasks/1");
-		ResourcePost sut = new ResourcePost(resourceRegistry, PROPERTIES_PROVIDER, typeParser, objectMapper, documentMapper, modificationFilters);
+		ResourcePost sut = new ResourcePost();
+		sut.init(controllerContext);
 
 		// WHEN
 		boolean result = sut.isAcceptable(jsonPath, REQUEST_TYPE);
@@ -65,7 +70,8 @@ public class ResourcePostTest extends BaseControllerTest {
 	public void onGivenRequestResourceGetShouldAcceptIt() {
 		// GIVEN
 		JsonPath jsonPath = pathBuilder.build("/tasks/");
-		ResourcePost sut = new ResourcePost(resourceRegistry, PROPERTIES_PROVIDER, typeParser, objectMapper, documentMapper, modificationFilters);
+		ResourcePost sut = new ResourcePost();
+		sut.init(controllerContext);
 
 		// WHEN
 		boolean result = sut.isAcceptable(jsonPath, REQUEST_TYPE);
@@ -82,7 +88,8 @@ public class ResourcePostTest extends BaseControllerTest {
 		newProjectBody.setData(Nullable.of((Object) data));
 
 		JsonPath projectPath = pathBuilder.build("/tasks");
-		ResourcePost sut = new ResourcePost(resourceRegistry, PROPERTIES_PROVIDER, typeParser, objectMapper, documentMapper, modificationFilters);
+		ResourcePost sut = new ResourcePost();
+		sut.init(controllerContext);
 
 		// THEN
 		expectedException.expect(RuntimeException.class);
@@ -99,7 +106,8 @@ public class ResourcePostTest extends BaseControllerTest {
 		newProjectBody.setData(Nullable.of((Object) new ArrayList<>()));
 
 		JsonPath projectPath = pathBuilder.build("/tasks");
-		ResourcePost sut = new ResourcePost(resourceRegistry, PROPERTIES_PROVIDER, typeParser, objectMapper, documentMapper, modificationFilters);
+		ResourcePost sut = new ResourcePost();
+		sut.init(controllerContext);
 
 		// THEN
 		expectedException.expect(RequestBodyException.class);
@@ -116,7 +124,8 @@ public class ResourcePostTest extends BaseControllerTest {
 		data.setType("fridges");
 		newProjectBody.setData(Nullable.of((Object) data));
 
-		ResourcePost sut = new ResourcePost(resourceRegistry, PROPERTIES_PROVIDER, typeParser, objectMapper, documentMapper, modificationFilters);
+		ResourcePost sut = new ResourcePost();
+		sut.init(controllerContext);
 
 		// THEN
 		expectedException.expect(RepositoryNotFoundException.class);
@@ -128,7 +137,8 @@ public class ResourcePostTest extends BaseControllerTest {
 	@Test
 	public void onUnknownResourceTypeShouldThrowException() throws Exception {
 		// GIVEN
-		ResourcePost sut = new ResourcePost(resourceRegistry, PROPERTIES_PROVIDER, typeParser, objectMapper, documentMapper, modificationFilters);
+		ResourcePost sut = new ResourcePost();
+		sut.init(controllerContext);
 
 		// THEN
 		expectedException.expect(RepositoryNotFoundException.class);
@@ -140,7 +150,8 @@ public class ResourcePostTest extends BaseControllerTest {
 	@Test
 	public void onNoBodyResourceShouldThrowException() throws Exception {
 		// GIVEN
-		ResourcePost sut = new ResourcePost(resourceRegistry, PROPERTIES_PROVIDER, typeParser, objectMapper, documentMapper, modificationFilters);
+		ResourcePost sut = new ResourcePost();
+		sut.init(controllerContext);
 
 		// THEN
 		expectedException.expect(RequestBodyNotFoundException.class);
@@ -157,7 +168,8 @@ public class ResourcePostTest extends BaseControllerTest {
 		newProjectBody.setData(Nullable.of((Object) data));
 
 		JsonPath projectPath = pathBuilder.build("/projects");
-		ResourcePost sut = new ResourcePost(resourceRegistry, PROPERTIES_PROVIDER, typeParser, objectMapper, documentMapper, modificationFilters);
+		ResourcePost sut = new ResourcePost();
+		sut.init(controllerContext);
 
 		// WHEN
 		Response projectResponse = sut.handle(projectPath, emptyProjectQuery, null, newProjectBody);
@@ -216,7 +228,8 @@ public class ResourcePostTest extends BaseControllerTest {
 				return null;
 			}
 		};
-		ResourcePost sut = new ResourcePost(resourceRegistry, propertiesProvider, typeParser, objectMapper, documentMapper, modificationFilters);
+		ResourcePost sut = new ResourcePost();
+		sut.init(controllerContext);
 
 		// WHEN
 		try {
@@ -246,7 +259,8 @@ public class ResourcePostTest extends BaseControllerTest {
 				return null;
 			}
 		};
-		ResourcePost sut = new ResourcePost(resourceRegistry, propertiesProvider, typeParser, objectMapper, documentMapper, modificationFilters);
+		ResourcePost sut = new ResourcePost();
+		sut.init(controllerContext);
 
 		// WHEN
 		Response response = sut.handle(path, emptyTaskQuery, null, requestDocument);
@@ -263,7 +277,8 @@ public class ResourcePostTest extends BaseControllerTest {
 		data.setType("projects");
 
 		JsonPath projectPath = pathBuilder.build("/projects");
-		ResourcePost sut = new ResourcePost(resourceRegistry, PROPERTIES_PROVIDER, typeParser, objectMapper, documentMapper, modificationFilters);
+		ResourcePost sut = new ResourcePost();
+		sut.init(controllerContext);
 
 		// WHEN
 		Response projectResponse = sut.handle(projectPath, emptyProjectQuery, null, newProjectBody);
@@ -312,7 +327,8 @@ public class ResourcePostTest extends BaseControllerTest {
 		data.setType("tasks");
 
 		JsonPath taskPath = pathBuilder.build("/tasks");
-		ResourcePost sut = new ResourcePost(resourceRegistry, PROPERTIES_PROVIDER, typeParser, objectMapper, documentMapper, modificationFilters);
+		ResourcePost sut = new ResourcePost();
+		sut.init(controllerContext);
 
 		// WHEN
 		Response taskResponse = sut.handle(taskPath, emptyTaskQuery, null, newTaskBody);
@@ -354,7 +370,8 @@ public class ResourcePostTest extends BaseControllerTest {
 
 	@Test
 	public void onUnchangedLazyRelationshipDataShouldNotReturnThatData() throws Exception {
-		ResourcePost sut = new ResourcePost(resourceRegistry, PROPERTIES_PROVIDER, typeParser, objectMapper, documentMapper, modificationFilters);
+		ResourcePost sut = new ResourcePost();
+		sut.init(controllerContext);
 		Document newProjectBody = new Document();
 		Resource data = createProject();
 		data.setType("projects");
@@ -385,7 +402,8 @@ public class ResourcePostTest extends BaseControllerTest {
 		data.setAttribute("body", objectMapper.readTree("\"sample body\""));
 
 		JsonPath projectPath = pathBuilder.build("/documents");
-		ResourcePost sut = new ResourcePost(resourceRegistry, PROPERTIES_PROVIDER, typeParser, objectMapper, documentMapper, modificationFilters);
+		ResourcePost sut = new ResourcePost();
+		sut.init(controllerContext);
 
 		// WHEN
 		Response memorandumResponse = sut.handle(projectPath, emptyMemorandumQuery, null, newMemorandumBody);
@@ -407,7 +425,8 @@ public class ResourcePostTest extends BaseControllerTest {
 		newProjectBody.setData(Nullable.of((Object) data));
 
 		JsonPath projectPath = pathBuilder.build("/projects");
-		ResourcePost sut = new ResourcePost(resourceRegistry, PROPERTIES_PROVIDER, typeParser, objectMapper, documentMapper, modificationFilters);
+		ResourcePost sut = new ResourcePost();
+		sut.init(controllerContext);
 
 		// WHEN
 		Response projectResponse = sut.handle(projectPath, emptyProjectQuery, null, newProjectBody);
@@ -448,8 +467,8 @@ public class ResourcePostTest extends BaseControllerTest {
 		assertThat(persistedProjectsRelationship).isNotNull();
 
 		// check lazy loaded relation
-		PojoRepository repo = (PojoRepository) resourceRegistry.getEntry(Pojo.class).getResourceRepository(null).getResourceRepository();
-		Pojo pojo = repo.findOne(null, null);
+		ResourceRepositoryV2 repo = resourceRegistry.getEntry(Pojo.class).getResourceRepositoryFacade();
+		Pojo pojo = (Pojo) repo.findOne(null, null);
 		assertThat(pojo.getProjects()).hasSize(1);
 		assertThat(pojo.getProjects().get(0).getId()).isEqualTo(projectId);
 	}
@@ -462,7 +481,8 @@ public class ResourcePostTest extends BaseControllerTest {
 		newProjectBody.setData(Nullable.of((Object) data));
 
 		JsonPath projectPath = pathBuilder.build("/projects");
-		ResourcePost sut = new ResourcePost(resourceRegistry, PROPERTIES_PROVIDER, typeParser, objectMapper, documentMapper, modificationFilters);
+		ResourcePost sut = new ResourcePost();
+		sut.init(controllerContext);
 
 		// WHEN
 		Response projectResponse = sut.handle(projectPath, emptyTaskQuery, null, newProjectBody);

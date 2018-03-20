@@ -6,6 +6,6 @@ import reactor.core.publisher.Mono;
 public class MonoAdapter {
 
 	public static <T> Mono<T> adapt(Result<T> mono) {
-
+		return null; // FIXME
 	}
 }

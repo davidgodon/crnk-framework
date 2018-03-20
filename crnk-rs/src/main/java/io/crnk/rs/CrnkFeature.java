@@ -1,6 +1,5 @@
 package io.crnk.rs;
 
-import java.io.Serializable;
 import java.util.Collection;
 import javax.ws.rs.ConstrainedTo;
 import javax.ws.rs.RuntimeType;
@@ -113,7 +112,7 @@ public class CrnkFeature implements Feature {
 		for (RegistryEntry registryEntry : registryEntries) {
 			ResourceRepositoryInformation repositoryInformation = registryEntry.getRepositoryInformation();
 			if (repositoryInformation != null && !repositoryInformation.getActions().isEmpty()) {
-				ResourceRepositoryAdapter<?, Serializable> repositoryAdapter = registryEntry.getResourceRepository(null);
+				ResourceRepositoryAdapter repositoryAdapter = registryEntry.getResourceRepository(null);
 				Object resourceRepository = repositoryAdapter.getResourceRepository();
 				context.register(resourceRepository);
 			}

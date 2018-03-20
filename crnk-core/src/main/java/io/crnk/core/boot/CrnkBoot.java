@@ -109,6 +109,8 @@ public class CrnkBoot {
 
 	private List<PagingBehavior> pagingBehaviors;
 
+	private QueryAdapterBuilder queryAdapterBuilder;
+
 	private static String buildServiceUrl(String resourceDefaultDomain, String webPathPrefix) {
 		return resourceDefaultDomain + (webPathPrefix != null ? webPathPrefix : "");
 	}
@@ -298,6 +300,8 @@ public class CrnkBoot {
 		return documentMapper;
 	}
 
+	private ControllerRegistry controllerRegistry;
+
 	private void setupComponents() {
 		// not that the provided default implementation here are added last and
 		// as a consequence,
@@ -307,8 +311,8 @@ public class CrnkBoot {
 
 			@Override
 			public void setupModule(ModuleContext context) {
-				ControllerRegistry controllerRegistry = createControllerRegistry();
-				QueryAdapterBuilder queryAdapterBuilder = createQueryAdapterBuilder();
+				controllerRegistry = createControllerRegistry();
+				queryAdapterBuilder = createQueryAdapterBuilder();
 
 				this.addHttpRequestProcessor(new JsonApiRequestProcessor(context, controllerRegistry, queryAdapterBuilder));
 				super.setupModule(context);
@@ -581,5 +585,13 @@ public class CrnkBoot {
 
 	public List<PagingBehavior> getPagingBehaviors() {
 		return pagingBehaviors;
+	}
+
+	public ControllerRegistry getControllerRegistry() {
+		return controllerRegistry;
+	}
+
+	public QueryAdapterBuilder getQueryAdapterBuilder() {
+		return queryAdapterBuilder;
 	}
 }

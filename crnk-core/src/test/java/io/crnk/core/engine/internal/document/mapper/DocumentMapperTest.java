@@ -29,7 +29,7 @@ public class DocumentMapperTest extends AbstractDocumentMapperTest {
 	public void testAttributesBasic() {
 		Task task = createTask(2, "sample task");
 
-		Document document = mapper.toDocument(toResponse(task), createAdapter(Task.class));
+		Document document = mapper.toDocument(toResponse(task), createAdapter(Task.class), mappingConfig).get();
 		Resource resource = document.getSingleData().get();
 		Assert.assertEquals("2", resource.getId());
 		Assert.assertEquals("tasks", resource.getType());
@@ -41,9 +41,8 @@ public class DocumentMapperTest extends AbstractDocumentMapperTest {
 	public void testSerializeWithoutLinks() {
 		Task task = createTask(2, "sample task");
 
-		DocumentMappingConfig mappingConfig = new DocumentMappingConfig();
 		mappingConfig.getResourceMapping().setSerializeLinks(false);
-		Document document = mapper.toDocument(toResponse(task), createAdapter(Task.class), mappingConfig);
+		Document document = mapper.toDocument(toResponse(task), createAdapter(Task.class), mappingConfig).get();
 
 		Resource resource = document.getSingleData().get();
 		Assert.assertEquals("2", resource.getId());
@@ -72,7 +71,7 @@ public class DocumentMapperTest extends AbstractDocumentMapperTest {
 		QuerySpecAdapter queryAdapter = (QuerySpecAdapter) toAdapter(new QuerySpec(Task.class));
 		queryAdapter.setCompactMode(true);
 
-		Document document = mapper.toDocument(toResponse(task), queryAdapter);
+		Document document = mapper.toDocument(toResponse(task), queryAdapter, mappingConfig).get();
 		Resource resource = document.getSingleData().get();
 		Assert.assertEquals("2", resource.getId());
 		Assert.assertEquals("tasks", resource.getType());
@@ -98,7 +97,7 @@ public class DocumentMapperTest extends AbstractDocumentMapperTest {
 		QuerySpecAdapter queryAdapter = (QuerySpecAdapter) toAdapter(querySpec);
 		queryAdapter.setCompactMode(true);
 
-		Document document = mapper.toDocument(toResponse(task), queryAdapter);
+		Document document = mapper.toDocument(toResponse(task), queryAdapter, mappingConfig).get();
 		Resource resource = document.getSingleData().get();
 		Assert.assertEquals("2", resource.getId());
 		Assert.assertEquals("tasks", resource.getType());
@@ -128,7 +127,7 @@ public class DocumentMapperTest extends AbstractDocumentMapperTest {
 		response.setMetaInformation(meta);
 		response.setLinksInformation(links);
 
-		Document document = mapper.toDocument(response, createAdapter(Task.class));
+		Document document = mapper.toDocument(response, createAdapter(Task.class), mappingConfig).get();
 		Assert.assertEquals("linksValue", getLinkText(document.getLinks().get("value")));
 		Assert.assertEquals("metaValue", document.getMeta().get("value").asText());
 	}
@@ -145,7 +144,7 @@ public class DocumentMapperTest extends AbstractDocumentMapperTest {
 		task.setMetaInformation(meta);
 		task.setLinksInformation(links);
 
-		Document document = mapper.toDocument(toResponse(task), createAdapter(Task.class));
+		Document document = mapper.toDocument(toResponse(task), createAdapter(Task.class), mappingConfig).get();
 		Resource resource = document.getSingleData().get();
 		Assert.assertEquals("linksValue", getLinkText(resource.getLinks().get("value")));
 		Assert.assertEquals("metaValue", resource.getMeta().get("value").asText());
@@ -158,7 +157,7 @@ public class DocumentMapperTest extends AbstractDocumentMapperTest {
 		ErrorData error = Mockito.mock(ErrorData.class);
 		response.setErrors(Arrays.asList(error));
 
-		Document document = mapper.toDocument(response, createAdapter(Task.class));
+		Document document = mapper.toDocument(response, createAdapter(Task.class), mappingConfig).get();
 		List<ErrorData> errors = document.getErrors();
 		Assert.assertEquals(1, errors.size());
 		Assert.assertSame(error, errors.get(0));
@@ -170,7 +169,7 @@ public class DocumentMapperTest extends AbstractDocumentMapperTest {
 		Project project = createProject(3, "sample project");
 		task.setProject(project);
 
-		Document document = mapper.toDocument(toResponse(task), createAdapter(Task.class));
+		Document document = mapper.toDocument(toResponse(task), createAdapter(Task.class), mappingConfig).get();
 		Resource resource = document.getSingleData().get();
 		Assert.assertEquals("2", resource.getId());
 
@@ -191,7 +190,7 @@ public class DocumentMapperTest extends AbstractDocumentMapperTest {
 		Project project2 = createProject(4, "sample project");
 		task.setProjects(Arrays.asList(project1, project2));
 
-		Document document = mapper.toDocument(toResponse(task), createAdapter(Task.class));
+		Document document = mapper.toDocument(toResponse(task), createAdapter(Task.class), mappingConfig).get();
 		Resource resource = document.getSingleData().get();
 		Assert.assertEquals("2", resource.getId());
 
@@ -212,7 +211,7 @@ public class DocumentMapperTest extends AbstractDocumentMapperTest {
 		QuerySpec querySpec = new QuerySpec(LazyTask.class);
 		querySpec.includeRelation(Arrays.asList("projects"));
 
-		Document document = mapper.toDocument(toResponse(task), toAdapter(querySpec));
+		Document document = mapper.toDocument(toResponse(task), toAdapter(querySpec), mappingConfig).get();
 		Resource resource = document.getSingleData().get();
 		Assert.assertEquals("2", resource.getId());
 
@@ -247,7 +246,7 @@ public class DocumentMapperTest extends AbstractDocumentMapperTest {
 		QuerySpec querySpec = new QuerySpec(LazyTask.class);
 		querySpec.includeRelation(Arrays.asList("project"));
 
-		Document document = mapper.toDocument(toResponse(task), toAdapter(querySpec));
+		Document document = mapper.toDocument(toResponse(task), toAdapter(querySpec), mappingConfig).get();
 		Resource resource = document.getSingleData().get();
 		Assert.assertEquals("2", resource.getId());
 
@@ -276,7 +275,7 @@ public class DocumentMapperTest extends AbstractDocumentMapperTest {
 		querySpec.includeRelation(Arrays.asList("project"));
 		querySpec.getOrCreateQuerySpec(Project.class).includeRelation(Arrays.asList("task"));
 
-		Document document = mapper.toDocument(toResponse(task), toAdapter(querySpec));
+		Document document = mapper.toDocument(toResponse(task), toAdapter(querySpec), mappingConfig).get();
 		Resource resource = document.getSingleData().get();
 		Assert.assertEquals("2", resource.getId());
 
@@ -301,7 +300,7 @@ public class DocumentMapperTest extends AbstractDocumentMapperTest {
 		Project project = createProject(3, "sample project");
 		task.setProject(project);
 
-		Document document = mapper.toDocument(toResponse(task), createAdapter(Task.class));
+		Document document = mapper.toDocument(toResponse(task), createAdapter(Task.class), mappingConfig).get();
 		Resource resource = document.getSingleData().get();
 		Assert.assertEquals("2", resource.getId());
 		Assert.assertEquals("tasks", resource.getType());
@@ -330,7 +329,7 @@ public class DocumentMapperTest extends AbstractDocumentMapperTest {
 		Project project = createProject(3, "sample project");
 		task.setLazyProject(project);
 
-		Document document = mapper.toDocument(toResponse(task), createAdapter(Task.class));
+		Document document = mapper.toDocument(toResponse(task), createAdapter(Task.class), mappingConfig).get();
 		Resource resource = document.getSingleData().get();
 		Assert.assertEquals("2", resource.getId());
 		Assert.assertEquals("lazy_tasks", resource.getType());
@@ -357,7 +356,7 @@ public class DocumentMapperTest extends AbstractDocumentMapperTest {
 		QuerySpec querySpec = new QuerySpec(Task.class);
 		querySpec.includeField(Arrays.asList("category"));
 
-		Document document = mapper.toDocument(response, toAdapter(querySpec));
+		Document document = mapper.toDocument(response, toAdapter(querySpec), mappingConfig).get();
 		Resource resource = document.getSingleData().get();
 		Assert.assertEquals("2", resource.getId());
 		Assert.assertEquals("tasks", resource.getType());

@@ -45,7 +45,7 @@ public class FormRelationshipRepository<T extends TaskResource, F extends FormRe
 
 			QuerySpecAdapter querySpecAdapter = new QuerySpecAdapter(querySpec, resourceRegistry);
 
-			return (F) resourceRepository.findOne(taskId, querySpecAdapter).getEntity();
+			return (F) resourceRepository.findOne(taskId, querySpecAdapter).get().getEntity();
 		}
 		else {
 			throw new UnsupportedOperationException("unknown fieldName '" + fieldName + "'");

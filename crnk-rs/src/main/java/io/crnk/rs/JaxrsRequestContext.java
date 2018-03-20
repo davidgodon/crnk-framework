@@ -85,17 +85,22 @@ public class JaxrsRequestContext implements HttpRequestContextBase {
 	}
 
 	@Override
-	public byte[] getRequestBody() throws IOException {
+	public byte[] getRequestBody() {
 		if (!requestBody.isPresent()) {
-			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-			int nRead;
-			byte[] data = new byte[16384];
-			InputStream is = requestContext.getEntityStream();
-			while ((nRead = is.read(data, 0, data.length)) != -1) {
-				buffer.write(data, 0, nRead);
+			try {
+				ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+				int nRead;
+				byte[] data = new byte[16384];
+				InputStream is = requestContext.getEntityStream();
+				while ((nRead = is.read(data, 0, data.length)) != -1) {
+					buffer.write(data, 0, nRead);
+				}
+				buffer.flush();
+				requestBody = Nullable.of(buffer.toByteArray());
 			}
-			buffer.flush();
-			requestBody = Nullable.of(buffer.toByteArray());
+			catch (IOException e) {
+				throw new IllegalStateException(e);
+			}
 		}
 		return requestBody.get();
 	}

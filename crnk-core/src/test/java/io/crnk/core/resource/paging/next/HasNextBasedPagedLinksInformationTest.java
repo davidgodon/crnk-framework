@@ -18,7 +18,7 @@ import org.mockito.Mockito;
 
 public class HasNextBasedPagedLinksInformationTest extends AbstractQuerySpecTest {
 
-	private ResourceRepositoryAdapter<Task, Long> adapter;
+	private ResourceRepositoryAdapter adapter;
 
 	@Before
 	public void setup() {
@@ -44,10 +44,10 @@ public class HasNextBasedPagedLinksInformationTest extends AbstractQuerySpecTest
 	}
 
 	@Test
-	public void testPaging() throws InstantiationException, IllegalAccessException {
+	public void testPaging() {
 		QuerySpecAdapter querySpec = new QuerySpecAdapter(querySpec(2L, 2L), resourceRegistry);
 
-		JsonApiResponse results = adapter.findAll(querySpec);
+		JsonApiResponse results = adapter.findAll(querySpec).get();
 
 		HasMoreResourcesMetaInformation metaInformation = (HasMoreResourcesMetaInformation) results.getMetaInformation();
 		Assert.assertTrue(metaInformation.getHasMoreResources());
@@ -60,12 +60,12 @@ public class HasNextBasedPagedLinksInformationTest extends AbstractQuerySpecTest
 	}
 
 	@Test
-	public void testPagingNoContents() throws InstantiationException, IllegalAccessException {
+	public void testPagingNoContents() {
 		HasNextPageTestRepository.clear();
 
 		QuerySpecAdapter querySpec = new QuerySpecAdapter(querySpec(0L, 2L), resourceRegistry);
 
-		JsonApiResponse results = adapter.findAll(querySpec);
+		JsonApiResponse results = adapter.findAll(querySpec).get();
 		HasMoreResourcesMetaInformation metaInformation = (HasMoreResourcesMetaInformation) results.getMetaInformation();
 		Assert.assertFalse(metaInformation.getHasMoreResources());
 
@@ -77,10 +77,10 @@ public class HasNextBasedPagedLinksInformationTest extends AbstractQuerySpecTest
 	}
 
 	@Test
-	public void testPagingFirst() throws InstantiationException, IllegalAccessException {
+	public void testPagingFirst() {
 		QuerySpecAdapter querySpec = new QuerySpecAdapter(querySpec(0L, 3L), resourceRegistry);
 
-		JsonApiResponse results = adapter.findAll(querySpec);
+		JsonApiResponse results = adapter.findAll(querySpec).get();
 
 		HasMoreResourcesMetaInformation metaInformation = (HasMoreResourcesMetaInformation) results.getMetaInformation();
 		Assert.assertTrue(metaInformation.getHasMoreResources());
@@ -93,10 +93,10 @@ public class HasNextBasedPagedLinksInformationTest extends AbstractQuerySpecTest
 	}
 
 	@Test
-	public void testPagingLast() throws InstantiationException, IllegalAccessException {
+	public void testPagingLast() {
 		QuerySpecAdapter querySpec = new QuerySpecAdapter(querySpec(4L, 4L), resourceRegistry);
 
-		JsonApiResponse results = adapter.findAll(querySpec);
+		JsonApiResponse results = adapter.findAll(querySpec).get();
 
 		HasMoreResourcesMetaInformation metaInformation = (HasMoreResourcesMetaInformation) results.getMetaInformation();
 		Assert.assertFalse(metaInformation.getHasMoreResources());
@@ -109,9 +109,9 @@ public class HasNextBasedPagedLinksInformationTest extends AbstractQuerySpecTest
 	}
 
 	@Test
-	public void testNoPaging() throws InstantiationException, IllegalAccessException {
+	public void testNoPaging() {
 		QuerySpecAdapter querySpec = new QuerySpecAdapter(querySpec(), resourceRegistry);
-		JsonApiResponse results = adapter.findAll(querySpec);
+		JsonApiResponse results = adapter.findAll(querySpec).get();
 
 		HasMoreResourcesMetaInformation metaInformation = (HasMoreResourcesMetaInformation) results.getMetaInformation();
 		Assert.assertNull(metaInformation.getHasMoreResources());
@@ -121,8 +121,8 @@ public class HasNextBasedPagedLinksInformationTest extends AbstractQuerySpecTest
 	}
 
 	@Test(expected = BadRequestException.class)
-	public void testInvalidPaging() throws InstantiationException, IllegalAccessException {
+	public void testInvalidPaging() {
 		QuerySpecAdapter querySpec = new QuerySpecAdapter(querySpec(1L, 3L), resourceRegistry);
-		adapter.findAll(querySpec).getLinksInformation();
+		adapter.findAll(querySpec).get().getLinksInformation();
 	}
 }

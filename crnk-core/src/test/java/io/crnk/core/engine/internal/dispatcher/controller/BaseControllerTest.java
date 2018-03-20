@@ -1,5 +1,11 @@
 package io.crnk.core.engine.internal.dispatcher.controller;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.crnk.core.boot.CrnkBoot;
 import io.crnk.core.engine.document.Resource;
@@ -13,8 +19,12 @@ import io.crnk.core.engine.properties.PropertiesProvider;
 import io.crnk.core.engine.registry.ResourceRegistry;
 import io.crnk.core.engine.url.ConstantServiceUrlProvider;
 import io.crnk.core.mock.MockConstants;
-import io.crnk.core.mock.models.*;
-import io.crnk.core.mock.repository.*;
+import io.crnk.core.mock.models.ComplexPojo;
+import io.crnk.core.mock.models.Memorandum;
+import io.crnk.core.mock.models.Project;
+import io.crnk.core.mock.models.Task;
+import io.crnk.core.mock.models.User;
+import io.crnk.core.mock.repository.MockRepositoryUtil;
 import io.crnk.core.module.ModuleRegistry;
 import io.crnk.core.module.discovery.ReflectionsServiceDiscovery;
 import io.crnk.core.queryspec.QuerySpec;
@@ -26,9 +36,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mockito;
-import org.mockito.internal.util.MockUtil;
-
-import java.util.*;
 
 public abstract class BaseControllerTest {
 
@@ -37,24 +44,39 @@ public abstract class BaseControllerTest {
 	protected static final long PROJECT_ID = 2;
 
 	protected static final PropertiesProvider PROPERTIES_PROVIDER = new EmptyPropertiesProvider();
+
 	@Rule
 	public ExpectedException expectedException = ExpectedException.none();
+
 	protected ObjectMapper objectMapper;
+
 	protected PathBuilder pathBuilder;
+
 	protected ResourceRegistry resourceRegistry;
+
 	protected TypeParser typeParser;
+
 	protected DocumentMapper documentMapper;
+
 	protected QueryParamsBuilder queryParamsBuilder = new QueryParamsBuilder(new DefaultQueryParamsParser());
+
 	protected ModuleRegistry moduleRegistry;
 
 	protected QuerySpecAdapter emptyTaskQuery;
+
 	protected QuerySpecAdapter emptyProjectQuery;
+
 	protected QuerySpecAdapter emptyUserQuery;
+
 	protected QuerySpecAdapter emptyComplexPojoQuery;
+
 	protected QuerySpecAdapter emptyMemorandumQuery;
 
 	protected ResourceModificationFilter modificationFilter;
+
 	protected List<ResourceModificationFilter> modificationFilters;
+
+	protected ControllerContext controllerContext;
 
 	@Before
 	public void prepare() {
@@ -73,6 +95,8 @@ public abstract class BaseControllerTest {
 		typeParser = moduleRegistry.getTypeParser();
 		documentMapper = boot.getDocumentMapper();
 
+		controllerContext = new ControllerContext(moduleRegistry, documentMapper);
+
 		MockRepositoryUtil.clear();
 
 		emptyTaskQuery = new QuerySpecAdapter(new QuerySpec(Task.class), resourceRegistry);
@@ -89,7 +113,8 @@ public abstract class BaseControllerTest {
 		try {
 			data.setAttribute("name", objectMapper.readTree("\"sample task\""));
 			data.setAttribute("data", objectMapper.readTree("\"asd\""));
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			throw new IllegalStateException(e);
 		}
 		return data;
@@ -102,7 +127,8 @@ public abstract class BaseControllerTest {
 
 		try {
 			data.setAttribute("name", objectMapper.readTree("\"sample user\""));
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			throw new IllegalStateException(e);
 		}
 		return data;
@@ -120,7 +146,8 @@ public abstract class BaseControllerTest {
 		try {
 			data.setAttribute("name", objectMapper.readTree("\"sample project\""));
 			data.setAttribute("data", objectMapper.readTree("{\"data\" : \"asd\"}"));
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			throw new IllegalStateException(e);
 		}
 		return data;

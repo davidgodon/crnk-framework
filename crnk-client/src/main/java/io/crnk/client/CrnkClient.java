@@ -1,8 +1,18 @@
 package io.crnk.client;
 
+import java.io.Serializable;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.ServiceLoader;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-
 import io.crnk.client.action.ActionStubFactory;
 import io.crnk.client.action.ActionStubFactoryContext;
 import io.crnk.client.http.HttpAdapter;
@@ -36,6 +46,7 @@ import io.crnk.core.engine.internal.information.repository.ResourceRepositoryInf
 import io.crnk.core.engine.internal.jackson.JacksonModule;
 import io.crnk.core.engine.internal.registry.ResourceRegistryImpl;
 import io.crnk.core.engine.internal.repository.RelationshipRepositoryAdapter;
+import io.crnk.core.engine.internal.repository.RelationshipRepositoryAdapterImpl;
 import io.crnk.core.engine.internal.repository.ResourceRepositoryAdapter;
 import io.crnk.core.engine.internal.utils.ClassUtils;
 import io.crnk.core.engine.internal.utils.JsonApiUrlBuilder;
@@ -63,17 +74,6 @@ import io.crnk.legacy.internal.DirectResponseRelationshipEntry;
 import io.crnk.legacy.internal.DirectResponseResourceEntry;
 import io.crnk.legacy.registry.RepositoryInstanceBuilder;
 import io.crnk.legacy.repository.RelationshipRepository;
-
-import java.io.Serializable;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Proxy;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
 
 /**
  * Client implementation giving access to JSON API repositories using stubs.
@@ -356,7 +356,7 @@ public class CrnkClient {
 		}
 		Object repoInstance = relationshipEntry.getRepositoryInstanceBuilder();
 
-		return new RelationshipRepositoryAdapter(sourceEntry.getResourceInformation(), moduleRegistry, repoInstance);
+		return new RelationshipRepositoryAdapterImpl(sourceEntry.getResourceInformation(), moduleRegistry, repoInstance);
 	}
 
 	/**

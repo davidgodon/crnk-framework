@@ -1,5 +1,13 @@
 package io.crnk.core.engine.internal.document.mapper.lookup;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import io.crnk.core.boot.CrnkProperties;
 import io.crnk.core.engine.document.Document;
 import io.crnk.core.engine.document.Relationship;
@@ -7,32 +15,25 @@ import io.crnk.core.engine.document.Resource;
 import io.crnk.core.engine.document.ResourceIdentifier;
 import io.crnk.core.engine.information.resource.ResourceField;
 import io.crnk.core.engine.information.resource.ResourceInformation;
+import io.crnk.core.engine.internal.document.mapper.AbstractDocumentMapperTest;
 import io.crnk.core.engine.internal.document.mapper.DocumentMapper;
 import io.crnk.core.engine.internal.repository.RelationshipRepositoryAdapter;
 import io.crnk.core.engine.internal.repository.ResourceRepositoryAdapter;
 import io.crnk.core.engine.properties.EmptyPropertiesProvider;
 import io.crnk.core.engine.properties.PropertiesProvider;
 import io.crnk.core.engine.query.QueryAdapter;
+import io.crnk.core.engine.result.SimpleResultFactory;
 import io.crnk.core.mock.models.HierarchicalTask;
 import io.crnk.core.mock.models.Project;
 import io.crnk.core.mock.models.Task;
 import io.crnk.core.queryspec.QuerySpec;
 import io.crnk.core.queryspec.internal.QuerySpecAdapter;
-import io.crnk.core.engine.internal.document.mapper.AbstractDocumentMapperTest;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 @RunWith(MockitoJUnitRunner.class)
 public class IncludeLookupSetterBaseTest extends AbstractDocumentMapperTest {
@@ -46,7 +47,6 @@ public class IncludeLookupSetterBaseTest extends AbstractDocumentMapperTest {
 	private HierarchicalTask h11;
 
 	private PropertiesProvider propertiesProvider = Mockito.mock(PropertiesProvider.class);
-
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Before
@@ -146,7 +146,7 @@ public class IncludeLookupSetterBaseTest extends AbstractDocumentMapperTest {
 		querySpec.setLimit(1L);
 		querySpec.includeRelation(Arrays.asList("children"));
 
-		Document document = mapper.toDocument(toResponse(hDetached), toAdapter(querySpec));
+		Document document = mapper.toDocument(toResponse(hDetached), toAdapter(querySpec), mappingConfig).get();
 
 		Relationship childrenRelationship = document.getSingleData().get().getRelationships().get("children");
 		List<ResourceIdentifier> childIds = childrenRelationship.getCollectionData().get();
@@ -167,7 +167,7 @@ public class IncludeLookupSetterBaseTest extends AbstractDocumentMapperTest {
 		querySpec.setLimit(1L);
 		querySpec.includeRelation(Arrays.asList("children"));
 
-		Document document = mapper.toDocument(toResponse(hDetached), toAdapter(querySpec));
+		Document document = mapper.toDocument(toResponse(hDetached), toAdapter(querySpec), mappingConfig).get();
 
 		Relationship childrenRelationship = document.getSingleData().get().getRelationships().get("children");
 		List<ResourceIdentifier> childIds = childrenRelationship.getCollectionData().get();
@@ -187,7 +187,7 @@ public class IncludeLookupSetterBaseTest extends AbstractDocumentMapperTest {
 		Task task = new Task();
 		task.setId(1L);
 
-		Document document = mapper.toDocument(toResponse(task), toAdapter(querySpec));
+		Document document = mapper.toDocument(toResponse(task), toAdapter(querySpec), mappingConfig).get();
 		Resource taskResource = document.getSingleData().get();
 
 		Relationship relationship = taskResource.getRelationships().get("includedProject");
@@ -206,7 +206,7 @@ public class IncludeLookupSetterBaseTest extends AbstractDocumentMapperTest {
 		Task task = new Task();
 		task.setId(1L);
 
-		Document document = mapper.toDocument(toResponse(task), toAdapter(querySpec));
+		Document document = mapper.toDocument(toResponse(task), toAdapter(querySpec), mappingConfig).get();
 		Resource taskResource = document.getSingleData().get();
 
 		Relationship relationship = taskResource.getRelationships().get("includedProjects");
@@ -222,7 +222,7 @@ public class IncludeLookupSetterBaseTest extends AbstractDocumentMapperTest {
 		Task task = new Task();
 		task.setId(3L);
 
-		Document document = mapper.toDocument(toResponse(task), toAdapter(querySpec));
+		Document document = mapper.toDocument(toResponse(task), toAdapter(querySpec), mappingConfig).get();
 		Resource taskResource = document.getSingleData().get();
 
 		Relationship oneRelationship = taskResource.getRelationships().get("includedProject");
@@ -245,7 +245,7 @@ public class IncludeLookupSetterBaseTest extends AbstractDocumentMapperTest {
 		Task task = new Task();
 		task.setId(3L);
 
-		Document document = mapper.toDocument(toResponse(task), toAdapter(querySpec));
+		Document document = mapper.toDocument(toResponse(task), toAdapter(querySpec), mappingConfig).get();
 		Resource taskResource = document.getSingleData().get();
 
 		Relationship manyRelationship = taskResource.getRelationships().get("includedProjects");
@@ -273,7 +273,8 @@ public class IncludeLookupSetterBaseTest extends AbstractDocumentMapperTest {
 				return null;
 			}
 		};
-		mapper = new DocumentMapper(resourceRegistry, objectMapper, propertiesProvider, resourceFilterDirectory);
+		mapper = new DocumentMapper(resourceRegistry, objectMapper, propertiesProvider, resourceFilterDirectory,
+				new SimpleResultFactory());
 
 		QuerySpec querySpec = new QuerySpec(Task.class);
 		querySpec.includeRelation(Arrays.asList("project"));
@@ -281,7 +282,7 @@ public class IncludeLookupSetterBaseTest extends AbstractDocumentMapperTest {
 		Task task = new Task();
 		task.setId(1L);
 
-		Document document = mapper.toDocument(toResponse(task), toAdapter(querySpec));
+		Document document = mapper.toDocument(toResponse(task), toAdapter(querySpec), mappingConfig).get();
 		Resource taskResource = document.getSingleData().get();
 
 		assertNotNull(taskResource.getRelationships().get("project"));
@@ -300,7 +301,8 @@ public class IncludeLookupSetterBaseTest extends AbstractDocumentMapperTest {
 				return null;
 			}
 		};
-		mapper = new DocumentMapper(resourceRegistry, objectMapper, propertiesProvider, resourceFilterDirectory);
+		mapper = new DocumentMapper(resourceRegistry, objectMapper, propertiesProvider, resourceFilterDirectory,
+				new SimpleResultFactory());
 
 		QuerySpec querySpec = new QuerySpec(Task.class);
 		querySpec.includeRelation(Arrays.asList("project"));
@@ -312,7 +314,7 @@ public class IncludeLookupSetterBaseTest extends AbstractDocumentMapperTest {
 		task.setId(1L);
 		task.setProject(project);
 
-		Document document = mapper.toDocument(toResponse(task), toAdapter(querySpec));
+		Document document = mapper.toDocument(toResponse(task), toAdapter(querySpec), mappingConfig).get();
 		Resource taskResource = document.getSingleData().get();
 
 		Relationship relationship = taskResource.getRelationships().get("project");
@@ -331,12 +333,13 @@ public class IncludeLookupSetterBaseTest extends AbstractDocumentMapperTest {
 		Project projectDefault = new Project().setId(3L);
 		task.setProject(projectDefault);
 
-		mapper = new DocumentMapper(resourceRegistry, objectMapper, new EmptyPropertiesProvider(), resourceFilterDirectory);
+		mapper = new DocumentMapper(resourceRegistry, objectMapper, new EmptyPropertiesProvider(), resourceFilterDirectory,
+				new SimpleResultFactory());
 
 		QuerySpec querySpec = new QuerySpec(Project.class);
 		querySpec.includeRelation(Collections.singletonList("task"));
 
-		Document document = mapper.toDocument(toResponse(project), toAdapter(querySpec));
+		Document document = mapper.toDocument(toResponse(project), toAdapter(querySpec), mappingConfig).get();
 		Resource projectResource = document.getSingleData().get();
 
 		Relationship relationship = projectResource.getRelationships().get("task");

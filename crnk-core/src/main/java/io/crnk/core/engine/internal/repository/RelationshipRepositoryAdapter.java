@@ -29,7 +29,9 @@ public interface RelationshipRepositoryAdapter {
 	Result<Map<Object, JsonApiResponse>> findBulkManyTargets(Collection sourceIds, ResourceField field, QueryAdapter
 			queryAdapter);
 
-	Result<Map<Object, JsonApiResponse>> findBulkOneTargets(Collection sourceIds, ResourceField field, QueryAdapter queryAdapter);
+	Result<Map<Object, JsonApiResponse>> findBulkOneTargets(Collection sourceIds, ResourceField field, QueryAdapter
+			queryAdapter);
 
-
+	@Deprecated
+	Object getRelationshipRepository();
 }

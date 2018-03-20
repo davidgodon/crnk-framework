@@ -16,7 +16,6 @@ import io.crnk.core.engine.internal.dispatcher.controller.RelationshipsResourceP
 import io.crnk.core.engine.internal.dispatcher.controller.ResourcePatch;
 import io.crnk.core.engine.internal.dispatcher.controller.ResourcePost;
 import io.crnk.core.engine.internal.dispatcher.path.JsonPath;
-import io.crnk.core.engine.properties.NullPropertiesProvider;
 import io.crnk.core.engine.query.QueryAdapter;
 import io.crnk.core.engine.registry.RegistryEntry;
 import io.crnk.core.engine.registry.ResourceRegistry;
@@ -102,8 +101,8 @@ public class ResourceIdControllerTest extends BaseControllerTest {
 		JsonPath postPath = pathBuilder.build("/relationIdTest");
 
 		// WHEN POST
-		ResourcePost sut = new ResourcePost(resourceRegistry, new NullPropertiesProvider(), typeParser, objectMapper,
-				documentMapper, modificationFilters);
+		ResourcePost sut = new ResourcePost();
+		sut.init(controllerContext);
 
 		Response taskResponse = sut.handle(postPath, emptyTaskQuery, null, newDocument);
 
@@ -135,8 +134,8 @@ public class ResourceIdControllerTest extends BaseControllerTest {
 		Document newDocument = createDocument(resource);
 
 		// WHEN PATCH
-		ResourcePatch sut = new ResourcePatch(resourceRegistry, new NullPropertiesProvider(), typeParser, objectMapper,
-				documentMapper, modificationFilters);
+		ResourcePatch sut = new ResourcePatch();
+		sut.init(controllerContext);
 
 		Response taskResponse = sut.handle(path, emptyTaskQuery, null, newDocument);
 
@@ -166,7 +165,8 @@ public class ResourceIdControllerTest extends BaseControllerTest {
 		Document newDocument = createDocument(scheduleId);
 
 		// WHEN PATCH
-		RelationshipsResourcePatch sut = new RelationshipsResourcePatch(resourceRegistry, typeParser, modificationFilters);
+		RelationshipsResourcePatch sut = new RelationshipsResourcePatch();
+		sut.init(controllerContext);
 
 		Response taskResponse = sut.handle(path, emptyTaskQuery, null, newDocument);
 

@@ -1,5 +1,9 @@
 package io.crnk.client.internal;
 
+import java.io.Serializable;
+import java.util.List;
+import java.util.concurrent.Callable;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.crnk.client.CrnkClient;
 import io.crnk.client.legacy.ResourceRepositoryStub;
@@ -8,6 +12,7 @@ import io.crnk.core.engine.document.Resource;
 import io.crnk.core.engine.http.HttpMethod;
 import io.crnk.core.engine.information.resource.ResourceField;
 import io.crnk.core.engine.information.resource.ResourceInformation;
+import io.crnk.core.engine.internal.document.mapper.DocumentMappingConfig;
 import io.crnk.core.engine.internal.utils.ExceptionUtil;
 import io.crnk.core.engine.internal.utils.JsonApiUrlBuilder;
 import io.crnk.core.queryspec.QuerySpec;
@@ -16,10 +21,6 @@ import io.crnk.core.repository.response.JsonApiResponse;
 import io.crnk.core.resource.list.DefaultResourceList;
 import io.crnk.legacy.queryParams.QueryParams;
 
-import java.io.Serializable;
-import java.util.List;
-import java.util.concurrent.Callable;
-
 public class ResourceRepositoryStubImpl<T, I extends Serializable> extends ClientStubBase
 		implements ResourceRepositoryV2<T, I>, ResourceRepositoryStub<T, I> {
 
@@ -27,7 +28,7 @@ public class ResourceRepositoryStubImpl<T, I extends Serializable> extends Clien
 
 
 	public ResourceRepositoryStubImpl(CrnkClient client, Class<T> resourceClass, ResourceInformation resourceInformation,
-									  JsonApiUrlBuilder urlBuilder) {
+			JsonApiUrlBuilder urlBuilder) {
 		super(client, urlBuilder, resourceClass);
 		this.resourceInformation = resourceInformation;
 	}
@@ -37,7 +38,8 @@ public class ResourceRepositoryStubImpl<T, I extends Serializable> extends Clien
 		response.setEntity(resource);
 
 		ClientDocumentMapper documentMapper = client.getDocumentMapper();
-		final Document requestDocument = documentMapper.toDocument(response, null);
+		DocumentMappingConfig mappingConfig = new DocumentMappingConfig();
+		final Document requestDocument = documentMapper.toDocument(response, null, mappingConfig).get();
 
 		final ObjectMapper objectMapper = client.getObjectMapper();
 		String requestBodyValue = ExceptionUtil.wrapCatchedExceptions(new Callable<String>() {
@@ -93,9 +95,11 @@ public class ResourceRepositoryStubImpl<T, I extends Serializable> extends Clien
 		}
 		if (create) {
 			return null;
-		} else if (entity instanceof Resource) {
+		}
+		else if (entity instanceof Resource) {
 			return ((Resource) entity).getId();
-		} else {
+		}
+		else {
 			ResourceField idField = resourceInformation.getIdField();
 			return idField.getAccessor().getValue(entity);
 		}

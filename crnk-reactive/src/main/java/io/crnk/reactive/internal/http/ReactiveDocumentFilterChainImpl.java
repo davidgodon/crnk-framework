@@ -3,14 +3,9 @@ package io.crnk.reactive.internal.http;
 import io.crnk.core.engine.dispatcher.Response;
 import io.crnk.core.engine.filter.DocumentFilterContext;
 import io.crnk.core.engine.internal.dispatcher.controller.BaseController;
-import io.crnk.core.engine.result.Result;
 import io.crnk.core.module.Module;
-import io.crnk.reactive.engine.document.ReactiveDocumentFilter;
 import io.crnk.reactive.engine.document.ReactiveDocumentFilterChain;
-import io.crnk.reactive.internal.MonoAdapter;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
 
 class ReactiveDocumentFilterChainImpl implements ReactiveDocumentFilterChain {
 
@@ -26,6 +21,9 @@ class ReactiveDocumentFilterChainImpl implements ReactiveDocumentFilterChain {
 
 	@Override
 	public Mono<Response> doFilter(DocumentFilterContext context) {
+		return null;
+		// FIXME
+		/*
 		List<ReactiveDocumentFilter> filters = moduleContext.getInstancesByType(ReactiveDocumentFilter.class);
 		if (filterIndex == filters.size()) {
 			Result<Response> response = controller.handleAsync(context.getJsonPath(), context.getQueryAdapter(), context.getParameterProvider(),
@@ -36,5 +34,6 @@ class ReactiveDocumentFilterChainImpl implements ReactiveDocumentFilterChain {
 			filterIndex++;
 			return filter.filter(context, this);
 		}
+		*/
 	}
 }

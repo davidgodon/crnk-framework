@@ -20,4 +20,7 @@ public interface ResourceRepositoryAdapter {
 	Result<JsonApiResponse> create(Object entity, QueryAdapter queryAdapter);
 
 	Result<JsonApiResponse> delete(Object id, QueryAdapter queryAdapter);
+
+	@Deprecated
+	Object getResourceRepository();
 }

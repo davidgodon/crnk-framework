@@ -8,6 +8,7 @@ import io.crnk.core.boot.CrnkBoot;
 import io.crnk.core.engine.document.Document;
 import io.crnk.core.engine.document.ErrorData;
 import io.crnk.core.engine.document.Resource;
+import io.crnk.core.engine.internal.document.mapper.DocumentMappingConfig;
 import io.crnk.core.engine.internal.http.HttpRequestContextBaseAdapter;
 import io.crnk.core.engine.internal.http.JsonApiRequestProcessor;
 import io.crnk.core.engine.url.ConstantServiceUrlProvider;
@@ -67,9 +68,7 @@ public class JsonApiRequestProcessorTest {
 		TaskRepository tasks = new TaskRepository();
 		tasks.save(task);
 
-		processor = new JsonApiRequestProcessor(moduleContext);
-
-
+		processor = new JsonApiRequestProcessor(moduleContext, boot.getControllerRegistry(), boot.getQueryAdapterBuilder());
 		requestContextBase = Mockito.mock(HttpRequestContextBase.class);
 		requestContext = new HttpRequestContextBaseAdapter(requestContextBase);
 
@@ -193,8 +192,9 @@ public class JsonApiRequestProcessorTest {
 
 		JsonApiResponse request = new JsonApiResponse();
 		request.setEntity(task);
+		DocumentMappingConfig mappingConfig = new DocumentMappingConfig();
 		Document requestDocument = boot.getDocumentMapper().toDocument(request, new QuerySpecAdapter(new QuerySpec(Task.class),
-				boot.getResourceRegistry()));
+				boot.getResourceRegistry()), mappingConfig).get();
 		return boot.getObjectMapper().writeValueAsString(requestDocument);
 	}
 
