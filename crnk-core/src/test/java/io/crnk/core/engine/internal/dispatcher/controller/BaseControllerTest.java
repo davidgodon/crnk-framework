@@ -14,7 +14,6 @@ import io.crnk.core.engine.filter.ResourceModificationFilterBase;
 import io.crnk.core.engine.internal.dispatcher.path.PathBuilder;
 import io.crnk.core.engine.internal.document.mapper.DocumentMapper;
 import io.crnk.core.engine.parser.TypeParser;
-import io.crnk.core.engine.properties.EmptyPropertiesProvider;
 import io.crnk.core.engine.properties.PropertiesProvider;
 import io.crnk.core.engine.registry.ResourceRegistry;
 import io.crnk.core.engine.url.ConstantServiceUrlProvider;
@@ -26,6 +25,7 @@ import io.crnk.core.mock.models.Task;
 import io.crnk.core.mock.models.User;
 import io.crnk.core.mock.repository.MockRepositoryUtil;
 import io.crnk.core.module.ModuleRegistry;
+import io.crnk.core.module.SimpleModule;
 import io.crnk.core.module.discovery.ReflectionsServiceDiscovery;
 import io.crnk.core.queryspec.QuerySpec;
 import io.crnk.core.queryspec.internal.QuerySpecAdapter;
@@ -42,8 +42,6 @@ public abstract class BaseControllerTest {
 	protected static final long TASK_ID = 1;
 
 	protected static final long PROJECT_ID = 2;
-
-	protected static final PropertiesProvider PROPERTIES_PROVIDER = new EmptyPropertiesProvider();
 
 	@Rule
 	public ExpectedException expectedException = ExpectedException.none();
@@ -78,14 +76,23 @@ public abstract class BaseControllerTest {
 
 	protected ControllerContext controllerContext;
 
+	protected PropertiesProvider propertiesProvider;
+
 	@Before
 	public void prepare() {
+		propertiesProvider = Mockito.mock(PropertiesProvider.class);
+
 		modificationFilter = Mockito.spy(new ResourceModificationFilterBase());
 		modificationFilters = Arrays.asList(modificationFilter);
+
+		SimpleModule testModule = new SimpleModule("test");
+		testModule.addResourceModificationFilter(modificationFilter);
 
 		CrnkBoot boot = new CrnkBoot();
 		boot.setServiceUrlProvider(new ConstantServiceUrlProvider(ResourceRegistryTest.TEST_MODELS_URL));
 		boot.setServiceDiscovery(new ReflectionsServiceDiscovery(MockConstants.TEST_MODELS_PACKAGE));
+		boot.addModule(testModule);
+		boot.setPropertiesProvider(propertiesProvider);
 		boot.boot();
 
 		objectMapper = boot.getObjectMapper();

@@ -47,9 +47,9 @@ public class IncludeRequest {
 
 	private final ResourceMapper resourceMapper;
 
-	private Map<ResourceIdentifier, Resource> dataMap = new HashMap<>();
+	private Map<ResourceIdentifier, Resource> dataMap;
 
-	private Map<ResourceIdentifier, Object> entityMap = new HashMap<>();
+	private Map<ResourceIdentifier, Object> entityMap;
 
 	private Map<ResourceIdentifier, Resource> resourceMap;
 
@@ -64,8 +64,8 @@ public class IncludeRequest {
 
 		List<Object> entityList = DocumentMapperUtil.toList(entity);
 		dataList = DocumentMapperUtil.toList(document.getData().get());
-		Map<ResourceIdentifier, Resource> dataMap = new HashMap<>();
-		Map<ResourceIdentifier, Object> entityMap = new HashMap<>();
+		dataMap = new HashMap<>();
+		entityMap = new HashMap<>();
 		for (int i = 0; i < dataList.size(); i++) {
 			Resource dataElement = dataList.get(i);
 			ResourceIdentifier id = dataElement.toIdentifier();

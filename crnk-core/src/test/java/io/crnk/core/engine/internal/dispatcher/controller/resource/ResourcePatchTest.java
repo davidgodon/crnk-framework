@@ -19,7 +19,6 @@ import io.crnk.core.engine.internal.dispatcher.controller.ResourcePost;
 import io.crnk.core.engine.internal.dispatcher.path.JsonPath;
 import io.crnk.core.engine.internal.dispatcher.path.ResourcePath;
 import io.crnk.core.engine.internal.repository.ResourceRepositoryAdapter;
-import io.crnk.core.engine.properties.PropertiesProvider;
 import io.crnk.core.engine.properties.ResourceFieldImmutableWriteBehavior;
 import io.crnk.core.exception.CrnkException;
 import io.crnk.core.exception.ForbiddenException;
@@ -147,16 +146,8 @@ public class ResourcePatchTest extends BaseControllerTest {
 		post.init(controllerContext);
 		post.handle(postPath, emptyTaskQuery, null, requestDocument);
 
-		PropertiesProvider propertiesProvider = new PropertiesProvider() {
-
-			@Override
-			public String getProperty(String key) {
-				if (CrnkProperties.RESOURCE_FIELD_IMMUTABLE_WRITE_BEHAVIOR.equals(key)) {
-					return ResourceFieldImmutableWriteBehavior.FAIL.toString();
-				}
-				return null;
-			}
-		};
+		Mockito.when(propertiesProvider.getProperty(Mockito.eq(CrnkProperties.RESOURCE_FIELD_IMMUTABLE_WRITE_BEHAVIOR)))
+				.thenReturn(ResourceFieldImmutableWriteBehavior.FAIL.toString());
 
 		ResourcePatch sut = new ResourcePatch();
 		sut.init(controllerContext);

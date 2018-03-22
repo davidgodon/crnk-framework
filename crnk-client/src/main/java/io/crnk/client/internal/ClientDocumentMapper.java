@@ -121,7 +121,7 @@ public class ClientDocumentMapper extends DocumentMapper {
 	}
 
 	public Object fromDocument(Document document, boolean getList) {
-		ControllerContext controllerContext = new ControllerContext(moduleRegistry, this);
+		ControllerContext controllerContext = new ControllerContext(moduleRegistry, () -> this);
 		ClientResourceUpsert upsert = new ClientResourceUpsert(proxyFactory);
 		upsert.init(controllerContext);
 

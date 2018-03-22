@@ -1,5 +1,9 @@
 package io.crnk.core.engine.internal.http;
 
+import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.crnk.core.engine.dispatcher.RequestDispatcher;
 import io.crnk.core.engine.dispatcher.Response;
@@ -12,7 +16,7 @@ import io.crnk.core.engine.http.HttpMethod;
 import io.crnk.core.engine.http.HttpRequestContext;
 import io.crnk.core.engine.http.HttpRequestProcessor;
 import io.crnk.core.engine.internal.dispatcher.ControllerRegistry;
-import io.crnk.core.engine.internal.dispatcher.controller.BaseController;
+import io.crnk.core.engine.internal.dispatcher.controller.Controller;
 import io.crnk.core.engine.internal.dispatcher.path.ActionPath;
 import io.crnk.core.engine.internal.dispatcher.path.JsonPath;
 import io.crnk.core.engine.internal.exception.ExceptionMapperRegistry;
@@ -22,10 +26,6 @@ import io.crnk.core.utils.Optional;
 import io.crnk.legacy.internal.RepositoryMethodParameterProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
 
 public class JsonApiRequestProcessor extends JsonApiRequestProcessorBase implements HttpRequestProcessor {
 
@@ -133,7 +133,7 @@ public class JsonApiRequestProcessor extends JsonApiRequestProcessorBase impleme
 	}
 
 	protected DocumentFilterChain getFilterChain(JsonPath jsonPath, String method) {
-		BaseController controller = controllerRegistry.getController(jsonPath, method);
+		Controller controller = controllerRegistry.getController(jsonPath, method);
 		return new DocumentFilterChainImpl(moduleContext, controller);
 
 	}

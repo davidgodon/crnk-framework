@@ -6,7 +6,7 @@ import io.crnk.core.engine.dispatcher.Response;
 import io.crnk.core.engine.filter.DocumentFilter;
 import io.crnk.core.engine.filter.DocumentFilterChain;
 import io.crnk.core.engine.filter.DocumentFilterContext;
-import io.crnk.core.engine.internal.dispatcher.controller.BaseController;
+import io.crnk.core.engine.internal.dispatcher.controller.Controller;
 import io.crnk.core.module.Module;
 
 class DocumentFilterChainImpl implements DocumentFilterChain {
@@ -14,9 +14,9 @@ class DocumentFilterChainImpl implements DocumentFilterChain {
 	private final Module.ModuleContext moduleContext;
 	protected int filterIndex = 0;
 
-	protected BaseController controller;
+	protected Controller controller;
 
-	public DocumentFilterChainImpl(Module.ModuleContext moduleContext, BaseController controller) {
+	public DocumentFilterChainImpl(Module.ModuleContext moduleContext, Controller controller) {
 		this.moduleContext = moduleContext;
 		this.controller = controller;
 	}

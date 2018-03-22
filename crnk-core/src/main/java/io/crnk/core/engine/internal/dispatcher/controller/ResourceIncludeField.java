@@ -4,6 +4,7 @@ import io.crnk.core.engine.document.Document;
 import io.crnk.core.engine.http.HttpMethod;
 import io.crnk.core.engine.information.resource.ResourceField;
 import io.crnk.core.engine.registry.RegistryEntry;
+import io.crnk.core.engine.registry.ResourceRegistry;
 import io.crnk.core.exception.RepositoryNotFoundException;
 import io.crnk.core.exception.RequestBodyNotFoundException;
 import io.crnk.core.exception.ResourceFieldNotFoundException;
@@ -23,7 +24,8 @@ public abstract class ResourceIncludeField extends BaseController {
 	}
 
 	protected RegistryEntry getRegistryEntry(String resourceType) {
-		RegistryEntry registryEntry = context.getResourceRegistry().getEntry(resourceType);
+		ResourceRegistry resourceRegistry = context.getResourceRegistry();
+		RegistryEntry registryEntry = resourceRegistry.getEntry(resourceType);
 		if (registryEntry == null) {
 			throw new RepositoryNotFoundException(resourceType);
 		}

@@ -24,6 +24,7 @@ import io.crnk.core.engine.internal.http.HttpRequestProcessorImpl;
 import io.crnk.core.engine.query.QueryAdapter;
 import io.crnk.core.engine.registry.ResourceRegistry;
 import io.crnk.core.engine.repository.mock.NewInstanceRepositoryMethodParameterProvider;
+import io.crnk.core.engine.result.SimpleResult;
 import io.crnk.core.engine.url.ConstantServiceUrlProvider;
 import io.crnk.core.mock.MockConstants;
 import io.crnk.core.module.ModuleRegistry;
@@ -74,18 +75,26 @@ public class FilterTest {
 		moduleRegistry = boot.getModuleRegistry();
 
 		pathBuilder = new PathBuilder(resourceRegistry);
-		ControllerRegistry controllerRegistry = new ControllerRegistry(null);
 		collectionGet = mock(CollectionGet.class);
+		ControllerRegistry controllerRegistry = boot.getControllerRegistry();
+		controllerRegistry.getControllers().clear();
 		controllerRegistry.addController(collectionGet);
+
 		dispatcher = new HttpRequestProcessorImpl(moduleRegistry, null);
+
 	}
 
 	@Test
-	public void test() throws Exception {
+	public void test() {
 		// WHEN
 		ArgumentCaptor<DocumentFilterContext> captor = ArgumentCaptor.forClass(DocumentFilterContext.class);
 		when(collectionGet.isAcceptable(any(JsonPath.class), eq(requestType))).thenCallRealMethod();
+		when(collectionGet.isAcceptable(any(JsonPath.class), eq(requestType))).thenCallRealMethod();
+		when(collectionGet.handleAsync(any(JsonPath.class), any(QueryAdapter.class),
+				any(RepositoryMethodParameterProvider.class), any(Document.class))).thenReturn(new SimpleResult<>(null));
+
 		when(filter.filter(any(DocumentFilterContext.class), any(DocumentFilterChain.class))).thenCallRealMethod();
+
 		Map<String, Set<String>> queryParams = new HashMap<>();
 		RepositoryMethodParameterProvider parameterProvider = new NewInstanceRepositoryMethodParameterProvider();
 		Document requestBody = new Document();
@@ -94,7 +103,7 @@ public class FilterTest {
 		// THEN
 		verify(filter).filter(captor.capture(), any(DocumentFilterChain.class));
 		verify(collectionGet, times(1))
-				.handle(any(JsonPath.class), any(QueryAdapter.class), any(RepositoryMethodParameterProvider.class),
+				.handleAsync(any(JsonPath.class), any(QueryAdapter.class), any(RepositoryMethodParameterProvider.class),
 						any(Document.class));
 		verify(filter, times(1)).filter(any(DocumentFilterContext.class), any(DocumentFilterChain.class));
 

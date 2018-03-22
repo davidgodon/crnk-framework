@@ -6,7 +6,7 @@ import io.crnk.core.engine.document.Document;
 import io.crnk.core.engine.filter.DocumentFilterContext;
 import io.crnk.core.engine.http.HttpRequestContext;
 import io.crnk.core.engine.internal.dispatcher.ControllerRegistry;
-import io.crnk.core.engine.internal.dispatcher.controller.BaseController;
+import io.crnk.core.engine.internal.dispatcher.controller.Controller;
 import io.crnk.core.engine.internal.dispatcher.path.JsonPath;
 import io.crnk.core.engine.internal.http.JsonApiRequestProcessor;
 import io.crnk.core.engine.internal.http.JsonApiRequestProcessorBase;
@@ -51,7 +51,7 @@ public class ReactiveJsonApiRequestProcessor extends JsonApiRequestProcessorBase
 
 
 	protected ReactiveDocumentFilterChain getFilterChain(JsonPath jsonPath, String method) {
-		BaseController controller = controllerRegistry.getController(jsonPath, method);
+		Controller controller = controllerRegistry.getController(jsonPath, method);
 		return new ReactiveDocumentFilterChainImpl(moduleContext, controller);
 
 	}

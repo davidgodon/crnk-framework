@@ -96,9 +96,8 @@ public class HttpRequestProcessorImpl implements RequestDispatcher {
 			Document requestBody) {
 
 		List<HttpRequestProcessor> processors = moduleRegistry.getHttpRequestProcessors();
-		JsonApiRequestProcessor processor =
-				(JsonApiRequestProcessor) processors.stream().filter(it -> it instanceof JsonApiRequestProcessor).findFirst()
-						.get();
+		JsonApiRequestProcessor processor = (JsonApiRequestProcessor) processors.stream()
+				.filter(it -> it instanceof JsonApiRequestProcessor).findFirst().get();
 
 		JsonPath jsonPath = new PathBuilder(moduleRegistry.getResourceRegistry()).build(path);
 

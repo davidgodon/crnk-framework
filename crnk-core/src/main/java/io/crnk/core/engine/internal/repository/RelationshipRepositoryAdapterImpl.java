@@ -1,6 +1,7 @@
 package io.crnk.core.engine.internal.repository;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -258,7 +259,7 @@ public class RelationshipRepositoryAdapterImpl extends ResponseRepositoryAdapter
 				}
 			};
 			RepositoryRequestSpec requestSpec =
-					RepositoryRequestSpecImpl.forFindTarget(moduleRegistry, queryAdapter, Arrays.asList(sourceIds), field);
+					RepositoryRequestSpecImpl.forFindTarget(moduleRegistry, queryAdapter, new ArrayList<>(sourceIds), field);
 			return new SimpleResult<>(chain.doFilter(newRepositoryFilterContext(requestSpec)));
 		}
 		else {
@@ -297,7 +298,7 @@ public class RelationshipRepositoryAdapterImpl extends ResponseRepositoryAdapter
 				}
 			};
 			RepositoryRequestSpec requestSpec =
-					RepositoryRequestSpecImpl.forFindTarget(moduleRegistry, queryAdapter, Arrays.asList(sourceIds), field);
+					RepositoryRequestSpecImpl.forFindTarget(moduleRegistry, queryAdapter, new ArrayList<>(sourceIds), field);
 			return new SimpleResult<>(chain.doFilter(newRepositoryFilterContext(requestSpec)));
 		}
 		else {

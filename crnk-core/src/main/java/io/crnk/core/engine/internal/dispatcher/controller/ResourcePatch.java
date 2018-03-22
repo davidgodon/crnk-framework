@@ -1,5 +1,14 @@
 package io.crnk.core.engine.internal.dispatcher.controller;
 
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.crnk.core.engine.dispatcher.Response;
@@ -20,11 +29,6 @@ import io.crnk.core.exception.ResourceNotFoundException;
 import io.crnk.core.repository.response.JsonApiResponse;
 import io.crnk.legacy.internal.RepositoryMethodParameterProvider;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.*;
-import java.util.concurrent.Callable;
-
 public class ResourcePatch extends ResourceUpsert {
 
 	@Override
@@ -41,7 +45,7 @@ public class ResourcePatch extends ResourceUpsert {
 
 	@Override
 	public Result<Response> handleAsync(JsonPath jsonPath, QueryAdapter queryAdapter,
-										RepositoryMethodParameterProvider parameterProvider, Document requestDocument) {
+			RepositoryMethodParameterProvider parameterProvider, Document requestDocument) {
 
 		RegistryEntry endpointRegistryEntry = getRegistryEntry(jsonPath);
 		final Resource requestResource = getRequestBody(requestDocument, jsonPath, HttpMethod.PATCH);
@@ -59,14 +63,17 @@ public class ResourcePatch extends ResourceUpsert {
 		ResourceRepositoryAdapter resourceRepository = endpointRegistryEntry.getResourceRepository(parameterProvider);
 		return resourceRepository
 				.findOne(resourceId, queryAdapter)
-				.doWork(resource -> {
-					checkNotNull(resource, jsonPath);
-					resourceInformation.verify(resource, requestDocument);
+				.merge(existingResponse -> {
+					Object existingEntity = existingResponse.getEntity();
+					checkNotNull(existingEntity, jsonPath);
+					resourceInformation.verify(existingEntity, requestDocument);
+					return documentMapper.toDocument(existingResponse, queryAdapter, mappingConfig)
+							.map(it -> it.getSingleData().get())
+							.doWork(existing -> mergeNestedAttribute(existing, requestResource))
+							.map(it -> existingEntity);
 				})
-				.merge(existing -> documentMapper.toDocument(existing, queryAdapter, mappingConfig))
-				.map(existing -> existing.getSingleData().get())
-				.doWork(existing -> mergeNestedAttribute(existing, requestResource))
-				.merge(existing -> applyChanges(registryEntry, existing, requestResource, queryAdapter, parameterProvider))
+				.merge(existingEntity -> applyChanges(registryEntry, existingEntity, requestResource, queryAdapter,
+						parameterProvider))
 				.map(this::toResponse);
 	}
 
@@ -74,7 +81,8 @@ public class ResourcePatch extends ResourceUpsert {
 		return new Response(updatedDocument, 200);
 	}
 
-	private Result<Document> applyChanges(RegistryEntry registryEntry, Resource existingResource, Resource requestResource, QueryAdapter queryAdapter, RepositoryMethodParameterProvider parameterProvider) {
+	private Result<Document> applyChanges(RegistryEntry registryEntry, Object existingResource, Resource requestResource,
+			QueryAdapter queryAdapter, RepositoryMethodParameterProvider parameterProvider) {
 		ResourceInformation resourceInformation = registryEntry.getResourceInformation();
 		ResourceRepositoryAdapter resourceRepository = registryEntry.getResourceRepository(parameterProvider);
 
@@ -83,11 +91,13 @@ public class ResourcePatch extends ResourceUpsert {
 		if (resourceInformation.getResourceClass() == Resource.class) {
 			loadedRelationshipNames = getLoadedRelationshipNames(requestResource);
 			updatedResource = resourceRepository.update(requestResource, queryAdapter);
-		} else {
+		}
+		else {
 			setAttributes(requestResource, existingResource, resourceInformation);
 			loadedRelationshipNames = getLoadedRelationshipNames(requestResource);
-			updatedResource = setRelationsAsync(existingResource, registryEntry, requestResource, queryAdapter, parameterProvider, false)
-					.merge(it -> resourceRepository.update(existingResource, queryAdapter));
+			updatedResource =
+					setRelationsAsync(existingResource, registryEntry, requestResource, queryAdapter, parameterProvider, false)
+							.merge(it -> resourceRepository.update(existingResource, queryAdapter));
 		}
 
 		DocumentMappingConfig mappingConfig = DocumentMappingConfig.create()

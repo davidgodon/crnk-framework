@@ -2,7 +2,7 @@ package io.crnk.reactive.internal.http;
 
 import io.crnk.core.engine.dispatcher.Response;
 import io.crnk.core.engine.filter.DocumentFilterContext;
-import io.crnk.core.engine.internal.dispatcher.controller.BaseController;
+import io.crnk.core.engine.internal.dispatcher.controller.Controller;
 import io.crnk.core.module.Module;
 import io.crnk.reactive.engine.document.ReactiveDocumentFilterChain;
 import reactor.core.publisher.Mono;
@@ -12,9 +12,9 @@ class ReactiveDocumentFilterChainImpl implements ReactiveDocumentFilterChain {
 	private final Module.ModuleContext moduleContext;
 	protected int filterIndex = 0;
 
-	protected BaseController controller;
+	protected Controller controller;
 
-	public ReactiveDocumentFilterChainImpl(Module.ModuleContext moduleContext, BaseController controller) {
+	public ReactiveDocumentFilterChainImpl(Module.ModuleContext moduleContext, Controller controller) {
 		this.moduleContext = moduleContext;
 		this.controller = controller;
 	}

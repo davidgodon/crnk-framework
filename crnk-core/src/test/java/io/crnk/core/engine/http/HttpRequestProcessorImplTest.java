@@ -37,15 +37,15 @@ import io.crnk.core.engine.internal.dispatcher.path.JsonPath;
 import io.crnk.core.engine.internal.exception.ExceptionMapperRegistryTest;
 import io.crnk.core.engine.internal.http.HttpRequestContextBaseAdapter;
 import io.crnk.core.engine.internal.http.HttpRequestProcessorImpl;
+import io.crnk.core.engine.internal.http.JsonApiRequestProcessor;
 import io.crnk.core.engine.internal.information.repository.ResourceRepositoryInformationImpl;
 import io.crnk.core.engine.query.QueryAdapter;
-import io.crnk.core.engine.registry.ResourceRegistry;
+import io.crnk.core.engine.result.SimpleResult;
+import io.crnk.core.exception.BadRequestException;
 import io.crnk.core.mock.MockConstants;
 import io.crnk.core.module.Module;
 import io.crnk.core.module.ModuleRegistry;
 import io.crnk.core.module.discovery.ReflectionsServiceDiscovery;
-import io.crnk.core.queryspec.DefaultQuerySpecDeserializer;
-import io.crnk.core.queryspec.internal.QuerySpecAdapterBuilder;
 import io.crnk.core.repository.ResourceRepositoryV2;
 import io.crnk.core.resource.annotations.JsonApiId;
 import io.crnk.core.resource.annotations.JsonApiResource;
@@ -63,21 +63,24 @@ public class HttpRequestProcessorImplTest {
 	@Rule
 	public ExpectedException expectedException = ExpectedException.none();
 
-	private ResourceRegistry resourceRegistry;
-
 	private ModuleRegistry moduleRegistry;
 
 	private DocumentFilter documentFilter = Mockito.spy(AbstractDocumentFilter.class);
 
+	private CrnkBoot boot;
+
+	private JsonApiRequestProcessor requestProcessor;
+
 	@Before
 	public void prepare() {
-		CrnkBoot boot = new CrnkBoot();
+		boot = new CrnkBoot();
 		boot.setServiceDiscovery(new ReflectionsServiceDiscovery(MockConstants.TEST_MODELS_PACKAGE));
 		boot.addModule(new ActionTestModule());
 		boot.boot();
 
-		resourceRegistry = boot.getResourceRegistry();
 		moduleRegistry = boot.getModuleRegistry();
+
+		requestProcessor = (JsonApiRequestProcessor) boot.getModuleRegistry().getHttpRequestProcessors().get(0);
 	}
 
 	@JsonApiResource(type = "actionResource")
@@ -158,18 +161,21 @@ public class HttpRequestProcessorImplTest {
 		Mockito.when(requestContextBase.getPath()).thenReturn("/tasks/");
 		Mockito.when(requestContextBase.getRequestHeader("Accept")).thenReturn("*");
 
-		ControllerRegistry controllerRegistry = new ControllerRegistry(null);
 		CollectionGet controller = mock(CollectionGet.class);
 		when(controller.isAcceptable(any(JsonPath.class), eq("GET"))).thenCallRealMethod();
 
+		when(controller.handleAsync(any(JsonPath.class), any(QueryAdapter.class), any(RepositoryMethodParameterProvider.class),
+				any(Document.class))).thenReturn(new SimpleResult<>(null));
+
+		ControllerRegistry controllerRegistry = boot.getControllerRegistry();
+		controllerRegistry.getControllers().clear();
 		controllerRegistry.addController(controller);
-		QuerySpecAdapterBuilder queryAdapterBuilder =
-				new QuerySpecAdapterBuilder(new DefaultQuerySpecDeserializer(), moduleRegistry);
+
 		RequestDispatcher sut = new HttpRequestProcessorImpl(moduleRegistry, null);
 		sut.process(requestContext);
 
 		verify(controller, times(1))
-				.handle(any(JsonPath.class), any(QueryAdapter.class), any(RepositoryMethodParameterProvider.class),
+				.handleAsync(any(JsonPath.class), any(QueryAdapter.class), any(RepositoryMethodParameterProvider.class),
 						any(Document.class));
 	}
 
@@ -179,21 +185,24 @@ public class HttpRequestProcessorImplTest {
 		String path = "/tasks/";
 		String requestType = "GET";
 
-		ControllerRegistry controllerRegistry = new ControllerRegistry(null);
 		CollectionGet controller = mock(CollectionGet.class);
+		ControllerRegistry controllerRegistry = boot.getControllerRegistry();
+		controllerRegistry.getControllers().clear();
 		controllerRegistry.addController(controller);
-		QuerySpecAdapterBuilder queryAdapterBuilder =
-				new QuerySpecAdapterBuilder(new DefaultQuerySpecDeserializer(), moduleRegistry);
+
 		RequestDispatcher sut = new HttpRequestProcessorImpl(moduleRegistry, null);
 
 		// WHEN
 		when(controller.isAcceptable(any(JsonPath.class), eq(requestType))).thenCallRealMethod();
+		when(controller.handleAsync(any(JsonPath.class), any(QueryAdapter.class), any(RepositoryMethodParameterProvider.class),
+				any(Document.class))).thenReturn(new SimpleResult<>(null));
+
 		Map<String, Set<String>> parameters = new HashMap<>();
 		sut.dispatchRequest(path, requestType, parameters, null, null);
 
 		// THEN
 		verify(controller, times(1))
-				.handle(any(JsonPath.class), any(QueryAdapter.class), any(RepositoryMethodParameterProvider.class),
+				.handleAsync(any(JsonPath.class), any(QueryAdapter.class), any(RepositoryMethodParameterProvider.class),
 						any(Document.class));
 	}
 
@@ -203,21 +212,24 @@ public class HttpRequestProcessorImplTest {
 		String path = "/tasks/1/relationships/project";
 		String requestType = "GET";
 
-		ControllerRegistry controllerRegistry = new ControllerRegistry(null);
 		RelationshipsResourceGet controller = mock(RelationshipsResourceGet.class);
+		ControllerRegistry controllerRegistry = boot.getControllerRegistry();
+		controllerRegistry.getControllers().clear();
 		controllerRegistry.addController(controller);
-		QuerySpecAdapterBuilder queryAdapterBuilder =
-				new QuerySpecAdapterBuilder(new DefaultQuerySpecDeserializer(), moduleRegistry);
+
 		RequestDispatcher sut = new HttpRequestProcessorImpl(moduleRegistry, null);
 
 		// WHEN
 		when(controller.isAcceptable(any(JsonPath.class), eq(requestType))).thenCallRealMethod();
+		when(controller.handleAsync(any(JsonPath.class), any(QueryAdapter.class), any(RepositoryMethodParameterProvider.class),
+				any(Document.class))).thenReturn(new SimpleResult<>(null));
+
 		Map<String, Set<String>> parameters = new HashMap<>();
 		sut.dispatchRequest(path, requestType, parameters, null, null);
 
 		// THEN
 		verify(controller, times(1))
-				.handle(any(JsonPath.class), any(QueryAdapter.class), any(RepositoryMethodParameterProvider.class),
+				.handleAsync(any(JsonPath.class), any(QueryAdapter.class), any(RepositoryMethodParameterProvider.class),
 						any(Document.class));
 	}
 
@@ -227,9 +239,6 @@ public class HttpRequestProcessorImplTest {
 		String path = "/actionResource/1/someAction";
 		String requestType = "GET";
 
-		ControllerRegistry controllerRegistry = new ControllerRegistry(null);
-		QuerySpecAdapterBuilder queryAdapterBuilder =
-				new QuerySpecAdapterBuilder(new DefaultQuerySpecDeserializer(), moduleRegistry);
 		RequestDispatcher sut = new HttpRequestProcessorImpl(moduleRegistry, null);
 
 		// WHEN
@@ -250,21 +259,17 @@ public class HttpRequestProcessorImplTest {
 
 	@Test
 	public void shouldMapExceptionToErrorResponseIfMapperIsAvailable() throws Exception {
-
 		ControllerRegistry controllerRegistry = mock(ControllerRegistry.class);
 		// noinspection unchecked
-		when(controllerRegistry.getController(any(JsonPath.class), anyString())).thenThrow(IllegalStateException.class);
+		when(controllerRegistry.getController(any(JsonPath.class), anyString())).thenThrow(new BadRequestException("test"));
+		requestProcessor.setControllerRegistry(controllerRegistry);
 
-		QuerySpecAdapterBuilder queryAdapterBuilder =
-				new QuerySpecAdapterBuilder(new DefaultQuerySpecDeserializer(), moduleRegistry);
 		RequestDispatcher requestDispatcher = new HttpRequestProcessorImpl(moduleRegistry,
 				ExceptionMapperRegistryTest.exceptionMapperRegistry);
 
 		Response response = requestDispatcher.dispatchRequest("tasks", null, null, null, null);
 		assertThat(response).isNotNull();
-
 		assertThat(response.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST_400);
-
 	}
 
 	@Test
@@ -272,15 +277,14 @@ public class HttpRequestProcessorImplTest {
 		ControllerRegistry controllerRegistry = mock(ControllerRegistry.class);
 		// noinspection unchecked
 		when(controllerRegistry.getController(any(JsonPath.class), anyString())).thenThrow(ArithmeticException.class);
+		requestProcessor.setControllerRegistry(controllerRegistry);
 
-		QuerySpecAdapterBuilder queryAdapterBuilder =
-				new QuerySpecAdapterBuilder(new DefaultQuerySpecDeserializer(), moduleRegistry);
 		RequestDispatcher
 				requestDispatcher =
 				new HttpRequestProcessorImpl(moduleRegistry, ExceptionMapperRegistryTest.exceptionMapperRegistry);
 
 		expectedException.expect(ArithmeticException.class);
 
-		Response response = requestDispatcher.dispatchRequest("tasks", null, null, null, null);
+		requestDispatcher.dispatchRequest("tasks", null, null, null, null);
 	}
 }

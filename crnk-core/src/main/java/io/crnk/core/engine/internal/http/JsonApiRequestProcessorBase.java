@@ -1,5 +1,10 @@
 package io.crnk.core.engine.internal.http;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Set;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.crnk.core.boot.CrnkProperties;
@@ -24,11 +29,6 @@ import io.crnk.core.module.Module;
 import io.crnk.legacy.internal.RepositoryMethodParameterProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
 
 public class JsonApiRequestProcessorBase {
 
@@ -135,5 +135,9 @@ public class JsonApiRequestProcessorBase {
 		} else {
 			return registryEntry.getResourceInformation();
 		}
+	}
+
+	public void setControllerRegistry(ControllerRegistry controllerRegistry) {
+		this.controllerRegistry = controllerRegistry;
 	}
 }

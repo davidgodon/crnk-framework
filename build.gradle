@@ -81,6 +81,7 @@ gradle.beforeProject { Project project ->
 				imports {
 					mavenBom 'org.springframework.boot:spring-boot-dependencies:1.5.8.RELEASE'
 					mavenBom 'io.projectreactor:reactor-bom:Bismuth-RELEASE'
+					mavenBom 'org.glassfish.jersey:jersey-bom:2.26'
 				}
 			}
 		}

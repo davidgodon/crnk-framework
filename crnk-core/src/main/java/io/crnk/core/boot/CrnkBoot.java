@@ -14,8 +14,8 @@ import io.crnk.core.engine.filter.ResourceFilterDirectory;
 import io.crnk.core.engine.http.HttpRequestContextAware;
 import io.crnk.core.engine.internal.CoreModule;
 import io.crnk.core.engine.internal.dispatcher.ControllerRegistry;
-import io.crnk.core.engine.internal.dispatcher.controller.BaseController;
 import io.crnk.core.engine.internal.dispatcher.controller.CollectionGet;
+import io.crnk.core.engine.internal.dispatcher.controller.Controller;
 import io.crnk.core.engine.internal.dispatcher.controller.ControllerContext;
 import io.crnk.core.engine.internal.dispatcher.controller.FieldResourceGet;
 import io.crnk.core.engine.internal.dispatcher.controller.FieldResourcePost;
@@ -273,7 +273,7 @@ public class CrnkBoot {
 	}
 
 	protected ControllerRegistry createControllerRegistry() {
-		Set<BaseController> controllers = new HashSet<>();
+		Set<Controller> controllers = new HashSet<>();
 		controllers.add(new RelationshipsResourceDelete());
 		controllers.add(new RelationshipsResourcePatch());
 		controllers.add(new RelationshipsResourcePost());
@@ -287,7 +287,7 @@ public class CrnkBoot {
 		controllers.add(new ResourcePost());
 
 		ControllerContext context = new ControllerContext(moduleRegistry, this::getDocumentMapper);
-		for (BaseController controller : controllers) {
+		for (Controller controller : controllers) {
 			controller.init(context);
 		}
 

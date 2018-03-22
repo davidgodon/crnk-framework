@@ -30,7 +30,7 @@ public class ClientResourceUpsertTest {
 		boot.boot();
 
 		ClientProxyFactory proxyFactory = Mockito.mock(ClientProxyFactory.class);
-		ControllerContext controllerContext = new ControllerContext(boot.getModuleRegistry(), boot.getDocumentMapper());
+		ControllerContext controllerContext = new ControllerContext(boot.getModuleRegistry(), boot::getDocumentMapper);
 		upsert = new ClientResourceUpsert(proxyFactory);
 		upsert.init(controllerContext);
 	}
