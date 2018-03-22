@@ -47,12 +47,12 @@ public class QuerySpecClientTest extends AbstractClientTest {
 	public void setup() {
 		super.setup();
 
-		scheduleRepo = client.getQuerySpecRepository(Schedule.class);
-		taskRepo = client.getQuerySpecRepository(Task.class);
-		projectRepo = client.getQuerySpecRepository(Project.class);
-		relRepo = client.getQuerySpecRepository(Task.class, Project.class);
-		scheduleTaskRepo = client.getQuerySpecRepository(Schedule.class, Task.class);
-		taskScheduleRepo = client.getQuerySpecRepository(Task.class, Schedule.class);
+		scheduleRepo = client.getRepositoryForType(Schedule.class);
+		taskRepo = client.getRepositoryForType(Task.class);
+		projectRepo = client.getRepositoryForType(Project.class);
+		relRepo = client.getRepositoryForType(Task.class, Project.class);
+		scheduleTaskRepo = client.getRepositoryForType(Schedule.class, Task.class);
+		taskScheduleRepo = client.getRepositoryForType(Task.class, Schedule.class);
 	}
 
 	@Test
