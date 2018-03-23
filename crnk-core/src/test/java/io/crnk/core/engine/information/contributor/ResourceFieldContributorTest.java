@@ -15,7 +15,7 @@ import io.crnk.core.engine.information.resource.ResourceField;
 import io.crnk.core.engine.information.resource.ResourceFieldAccessor;
 import io.crnk.core.engine.information.resource.ResourceFieldType;
 import io.crnk.core.engine.information.resource.ResourceInformation;
-import io.crnk.core.engine.internal.http.HttpRequestProcessorImpl;
+import io.crnk.core.engine.internal.http.HttpRequestDispatcherImpl;
 import io.crnk.core.engine.internal.utils.MultivaluedMap;
 import io.crnk.core.engine.registry.RegistryEntry;
 import io.crnk.core.engine.registry.ResourceRegistry;
@@ -92,7 +92,7 @@ public class ResourceFieldContributorTest {
 		task.setName("someTask");
 		repo.save(task);
 
-		HttpRequestProcessorImpl requestDispatcher = boot.getRequestDispatcher();
+		HttpRequestDispatcherImpl requestDispatcher = boot.getRequestDispatcher();
 
 		HttpRequestContextProvider httpRequestContextProvider = boot.getModuleRegistry().getHttpRequestContextProvider();
 		HttpRequestContext request = Mockito.mock(HttpRequestContext.class);

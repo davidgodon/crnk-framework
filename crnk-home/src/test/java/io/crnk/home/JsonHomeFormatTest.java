@@ -3,7 +3,7 @@ package io.crnk.home;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.crnk.core.boot.CrnkBoot;
 import io.crnk.core.engine.http.HttpRequestContextBase;
-import io.crnk.core.engine.internal.http.HttpRequestProcessorImpl;
+import io.crnk.core.engine.internal.http.HttpRequestDispatcherImpl;
 import io.crnk.core.engine.url.ConstantServiceUrlProvider;
 import io.crnk.meta.MetaModule;
 import io.crnk.meta.MetaModuleConfig;
@@ -54,7 +54,7 @@ public class JsonHomeFormatTest {
 		Mockito.when(requestContextBase.getRequestHeader("Accept"))
 				.thenReturn(anyRequest ? "*" : HomeModule.JSON_HOME_CONTENT_TYPE);
 
-		HttpRequestProcessorImpl requestDispatcher = boot.getRequestDispatcher();
+		HttpRequestDispatcherImpl requestDispatcher = boot.getRequestDispatcher();
 		requestDispatcher.process(requestContextBase);
 
 		Mockito.verify(requestContextBase, Mockito.times(1)).setResponse(statusCaptor.capture(), responseCaptor.capture());

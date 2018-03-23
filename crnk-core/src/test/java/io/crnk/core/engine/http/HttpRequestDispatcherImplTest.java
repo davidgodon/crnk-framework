@@ -36,7 +36,7 @@ import io.crnk.core.engine.internal.dispatcher.path.ActionPath;
 import io.crnk.core.engine.internal.dispatcher.path.JsonPath;
 import io.crnk.core.engine.internal.exception.ExceptionMapperRegistryTest;
 import io.crnk.core.engine.internal.http.HttpRequestContextBaseAdapter;
-import io.crnk.core.engine.internal.http.HttpRequestProcessorImpl;
+import io.crnk.core.engine.internal.http.HttpRequestDispatcherImpl;
 import io.crnk.core.engine.internal.http.JsonApiRequestProcessor;
 import io.crnk.core.engine.internal.information.repository.ResourceRepositoryInformationImpl;
 import io.crnk.core.engine.query.QueryAdapter;
@@ -58,7 +58,7 @@ import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
-public class HttpRequestProcessorImplTest {
+public class HttpRequestDispatcherImplTest {
 
 	@Rule
 	public ExpectedException expectedException = ExpectedException.none();
@@ -171,7 +171,7 @@ public class HttpRequestProcessorImplTest {
 		controllerRegistry.getControllers().clear();
 		controllerRegistry.addController(controller);
 
-		RequestDispatcher sut = new HttpRequestProcessorImpl(moduleRegistry, null);
+		RequestDispatcher sut = new HttpRequestDispatcherImpl(moduleRegistry, null);
 		sut.process(requestContext);
 
 		verify(controller, times(1))
@@ -190,7 +190,7 @@ public class HttpRequestProcessorImplTest {
 		controllerRegistry.getControllers().clear();
 		controllerRegistry.addController(controller);
 
-		RequestDispatcher sut = new HttpRequestProcessorImpl(moduleRegistry, null);
+		RequestDispatcher sut = new HttpRequestDispatcherImpl(moduleRegistry, null);
 
 		// WHEN
 		when(controller.isAcceptable(any(JsonPath.class), eq(requestType))).thenCallRealMethod();
@@ -217,7 +217,7 @@ public class HttpRequestProcessorImplTest {
 		controllerRegistry.getControllers().clear();
 		controllerRegistry.addController(controller);
 
-		RequestDispatcher sut = new HttpRequestProcessorImpl(moduleRegistry, null);
+		RequestDispatcher sut = new HttpRequestDispatcherImpl(moduleRegistry, null);
 
 		// WHEN
 		when(controller.isAcceptable(any(JsonPath.class), eq(requestType))).thenCallRealMethod();
@@ -239,7 +239,7 @@ public class HttpRequestProcessorImplTest {
 		String path = "/actionResource/1/someAction";
 		String requestType = "GET";
 
-		RequestDispatcher sut = new HttpRequestProcessorImpl(moduleRegistry, null);
+		RequestDispatcher sut = new HttpRequestDispatcherImpl(moduleRegistry, null);
 
 		// WHEN
 		Map<String, Set<String>> parameters = new HashMap<>();
@@ -264,7 +264,7 @@ public class HttpRequestProcessorImplTest {
 		when(controllerRegistry.getController(any(JsonPath.class), anyString())).thenThrow(new BadRequestException("test"));
 		requestProcessor.setControllerRegistry(controllerRegistry);
 
-		RequestDispatcher requestDispatcher = new HttpRequestProcessorImpl(moduleRegistry,
+		RequestDispatcher requestDispatcher = new HttpRequestDispatcherImpl(moduleRegistry,
 				ExceptionMapperRegistryTest.exceptionMapperRegistry);
 
 		Response response = requestDispatcher.dispatchRequest("tasks", null, null, null, null);
@@ -281,7 +281,7 @@ public class HttpRequestProcessorImplTest {
 
 		RequestDispatcher
 				requestDispatcher =
-				new HttpRequestProcessorImpl(moduleRegistry, ExceptionMapperRegistryTest.exceptionMapperRegistry);
+				new HttpRequestDispatcherImpl(moduleRegistry, ExceptionMapperRegistryTest.exceptionMapperRegistry);
 
 		expectedException.expect(ArithmeticException.class);
 

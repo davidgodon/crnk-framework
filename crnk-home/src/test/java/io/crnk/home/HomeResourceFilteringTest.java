@@ -7,7 +7,7 @@ import io.crnk.core.engine.filter.ResourceFilter;
 import io.crnk.core.engine.http.HttpMethod;
 import io.crnk.core.engine.http.HttpRequestContextBase;
 import io.crnk.core.engine.information.resource.ResourceInformation;
-import io.crnk.core.engine.internal.http.HttpRequestProcessorImpl;
+import io.crnk.core.engine.internal.http.HttpRequestDispatcherImpl;
 import io.crnk.core.engine.url.ConstantServiceUrlProvider;
 import io.crnk.core.module.SimpleModule;
 import io.crnk.test.mock.TestModule;
@@ -66,7 +66,7 @@ public class HomeResourceFilteringTest {
 		Mockito.when(requestContextBase.getPath()).thenReturn("/");
 		Mockito.when(requestContextBase.getRequestHeader("Accept")).thenReturn("*");
 
-		HttpRequestProcessorImpl requestDispatcher = boot.getRequestDispatcher();
+		HttpRequestDispatcherImpl requestDispatcher = boot.getRequestDispatcher();
 		requestDispatcher.process(requestContextBase);
 
 		Mockito.verify(requestContextBase, Mockito.times(1)).setResponse(statusCaptor.capture(), responseCaptor.capture());

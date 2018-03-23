@@ -29,7 +29,7 @@ import io.crnk.core.engine.internal.dispatcher.controller.ResourcePatch;
 import io.crnk.core.engine.internal.dispatcher.controller.ResourcePost;
 import io.crnk.core.engine.internal.document.mapper.DocumentMapper;
 import io.crnk.core.engine.internal.exception.ExceptionMapperRegistry;
-import io.crnk.core.engine.internal.http.HttpRequestProcessorImpl;
+import io.crnk.core.engine.internal.http.HttpRequestDispatcherImpl;
 import io.crnk.core.engine.internal.http.JsonApiRequestProcessor;
 import io.crnk.core.engine.internal.jackson.JacksonModule;
 import io.crnk.core.engine.internal.registry.ResourceRegistryImpl;
@@ -87,7 +87,7 @@ public class CrnkBoot {
 
 	private ResourceRegistry resourceRegistry;
 
-	private HttpRequestProcessorImpl requestDispatcher;
+	private HttpRequestDispatcherImpl requestDispatcher;
 
 	private PropertiesProvider propertiesProvider = new NullPropertiesProvider();
 
@@ -252,9 +252,9 @@ public class CrnkBoot {
 		return moduleRegistry.getExceptionMapperRegistry();
 	}
 
-	private HttpRequestProcessorImpl createRequestDispatcher(ExceptionMapperRegistry exceptionMapperRegistry) {
+	private HttpRequestDispatcherImpl createRequestDispatcher(ExceptionMapperRegistry exceptionMapperRegistry) {
 		this.documentMapper = createDocumentMapper();
-		return new HttpRequestProcessorImpl(moduleRegistry, exceptionMapperRegistry);
+		return new HttpRequestDispatcherImpl(moduleRegistry, exceptionMapperRegistry);
 	}
 
 	protected QueryAdapterBuilder createQueryAdapterBuilder() {
@@ -381,7 +381,7 @@ public class CrnkBoot {
 		}
 	}
 
-	public HttpRequestProcessorImpl getRequestDispatcher() {
+	public HttpRequestDispatcherImpl getRequestDispatcher() {
 		PreconditionUtil.assertNotNull("expected requestDispatcher", requestDispatcher);
 		return requestDispatcher;
 	}

@@ -20,7 +20,7 @@ import io.crnk.core.engine.internal.dispatcher.ControllerRegistry;
 import io.crnk.core.engine.internal.dispatcher.controller.CollectionGet;
 import io.crnk.core.engine.internal.dispatcher.path.JsonPath;
 import io.crnk.core.engine.internal.dispatcher.path.PathBuilder;
-import io.crnk.core.engine.internal.http.HttpRequestProcessorImpl;
+import io.crnk.core.engine.internal.http.HttpRequestDispatcherImpl;
 import io.crnk.core.engine.query.QueryAdapter;
 import io.crnk.core.engine.registry.ResourceRegistry;
 import io.crnk.core.engine.repository.mock.NewInstanceRepositoryMethodParameterProvider;
@@ -80,7 +80,7 @@ public class FilterTest {
 		controllerRegistry.getControllers().clear();
 		controllerRegistry.addController(collectionGet);
 
-		dispatcher = new HttpRequestProcessorImpl(moduleRegistry, null);
+		dispatcher = new HttpRequestDispatcherImpl(moduleRegistry, null);
 
 	}
 

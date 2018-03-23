@@ -4,8 +4,16 @@ public interface HttpRequestContext extends HttpRequestContextBase {
 
 	boolean accepts(String contentType);
 
+	/**
+	 * @deprecated use {@link HttpResponse}
+	 */
+	@Deprecated
 	void setContentType(String contentType);
 
+	/**
+	 * @deprecated use {@link HttpResponse}
+	 */
+	@Deprecated
 	void setResponse(int statusCode, String text);
 
 	boolean acceptsAny();

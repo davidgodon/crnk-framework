@@ -11,16 +11,17 @@ import io.crnk.core.engine.document.Document;
 import io.crnk.core.engine.error.JsonApiExceptionMapper;
 import io.crnk.core.engine.filter.DocumentFilterChain;
 import io.crnk.core.engine.filter.DocumentFilterContext;
-import io.crnk.core.engine.http.HttpHeaders;
-import io.crnk.core.engine.http.HttpMethod;
-import io.crnk.core.engine.http.HttpRequestContext;
-import io.crnk.core.engine.http.HttpRequestProcessor;
+import io.crnk.core.engine.http.*;
+import io.crnk.core.engine.information.resource.ResourceInformation;
 import io.crnk.core.engine.internal.dispatcher.ControllerRegistry;
 import io.crnk.core.engine.internal.dispatcher.controller.Controller;
 import io.crnk.core.engine.internal.dispatcher.path.ActionPath;
 import io.crnk.core.engine.internal.dispatcher.path.JsonPath;
 import io.crnk.core.engine.internal.exception.ExceptionMapperRegistry;
+import io.crnk.core.engine.query.QueryAdapter;
 import io.crnk.core.engine.query.QueryAdapterBuilder;
+import io.crnk.core.engine.result.Result;
+import io.crnk.core.engine.result.ResultFactory;
 import io.crnk.core.module.Module;
 import io.crnk.core.utils.Optional;
 import io.crnk.legacy.internal.RepositoryMethodParameterProvider;
@@ -30,7 +31,6 @@ import org.slf4j.LoggerFactory;
 public class JsonApiRequestProcessor extends JsonApiRequestProcessorBase implements HttpRequestProcessor {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(JsonApiRequestProcessor.class);
-
 
 
 	public JsonApiRequestProcessor(Module.ModuleContext moduleContext, ControllerRegistry controllerRegistry,
@@ -78,35 +78,57 @@ public class JsonApiRequestProcessor extends JsonApiRequestProcessorBase impleme
 
 
 	@Override
-	public void process(HttpRequestContext requestContext) throws IOException {
-		if (isJsonApiRequest(requestContext, isAcceptingPlainJson())) {
-			RequestDispatcher requestDispatcher = moduleContext.getRequestDispatcher();
+	public boolean supportsAsync() {
+		return true;
+	}
 
-			JsonPath jsonPath = getJsonPath(requestContext);
-			Map<String, Set<String>> parameters = requestContext.getRequestParameters();
-			String method = requestContext.getMethod();
+	@Override
+	public boolean accepts(HttpRequestContext context) {
+		return isJsonApiRequest(context, isAcceptingPlainJson());
+	}
 
-			String path = requestContext.getPath();
-			if (jsonPath instanceof ActionPath) {
-				// inital implementation, has to improve
-				requestDispatcher.dispatchAction(path, method, parameters);
-			} else if (jsonPath != null) {
+	@Override
+	public Result<HttpResponse> processAsync(HttpRequestContext requestContext) {
 
-				Document document;
-				try {
-					document = getRequestDocument(requestContext);
-				} catch (JsonProcessingException e) {
-					setJsonError(requestContext, e);
-					return;
-				}
+		RequestDispatcher requestDispatcher = moduleContext.getRequestDispatcher();
 
-				RepositoryMethodParameterProvider parameterProvider = requestContext.getRequestParameterProvider();
-				Response crnkResponse = requestDispatcher
-						.dispatchRequest(path, method, parameters, parameterProvider, document);
-				setResponse(requestContext, crnkResponse);
-			} else {
-				// no repositories invoked, we do nothing
+		JsonPath jsonPath = getJsonPath(requestContext);
+		Map<String, Set<String>> parameters = requestContext.getRequestParameters();
+		String method = requestContext.getMethod();
+
+		ResultFactory resultFactory = moduleContext.getResultFactory();
+
+		String path = requestContext.getPath();
+		if (jsonPath instanceof ActionPath) {
+			// inital implementation, has to improve
+			requestDispatcher.dispatchAction(path, method, parameters);
+			return resultFactory.just(null);
+		} else if (jsonPath != null) {
+			Document document;
+			try {
+				document = getRequestDocument(requestContext);
+			} catch (JsonProcessingException e) {
+				return resultFactory.just(getErrorResponse(requestContext, e));
 			}
+
+			RepositoryMethodParameterProvider parameterProvider = requestContext.getRequestParameterProvider();
+
+			Controller controller = controllerRegistry.getController(jsonPath, method);
+
+			ResourceInformation resourceInformation = getRequestedResource(jsonPath);
+			QueryAdapter queryAdapter = queryAdapterBuilder.build(resourceInformation, parameters);
+
+			Result<Response> responseResult = controller.handleAsync(jsonPath, queryAdapter, parameterProvider, document);
+
+			DocumentFilterContextImpl filterContext =  new DocumentFilterContextImpl(jsonPath, queryAdapter, parameterProvider, document, method);
+
+
+			Result<Object> result = resultFactory.just(null);
+
+
+
+			DocumentFilterChain filterChain = getFilterChain(jsonPath, method);
+			return filterChain.doFilter(filterContext);
 		}
 	}
 

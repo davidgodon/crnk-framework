@@ -7,13 +7,13 @@ import java.util.List;
 import io.crnk.core.engine.internal.dispatcher.controller.Controller;
 import io.crnk.core.engine.internal.dispatcher.path.JsonPath;
 import io.crnk.core.engine.internal.dispatcher.path.PathBuilder;
-import io.crnk.core.engine.internal.http.HttpRequestProcessorImpl;
+import io.crnk.core.engine.internal.http.HttpRequestDispatcherImpl;
 import io.crnk.core.exception.MethodNotFoundException;
 
 /**
  * Stores a list of controllers which are used to process the incoming requests.
  *
- * @see HttpRequestProcessorImpl
+ * @see HttpRequestDispatcherImpl
  */
 public class ControllerRegistry {
 

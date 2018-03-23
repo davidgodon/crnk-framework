@@ -65,6 +65,8 @@ import io.crnk.legacy.repository.annotations.JsonApiResourceRepository;
  */
 public class ModuleRegistry {
 
+	private ResultFactory resultFactory;
+
 	enum InitializedState {
 		NOT_INITIALIZED,
 		INITIALIZING,
@@ -115,8 +117,16 @@ public class ModuleRegistry {
 		return prioritze(aggregatedModule.getResourceModificationFilters());
 	}
 
+	public ResultFactory getResultFactory() {
+		return resultFactory;
+	}
+
 	public Collection<Object> getRepositories() {
 		return aggregatedModule.getRepositories();
+	}
+
+	public void setResultFactory(ResultFactory resultFactory) {
+		this.resultFactory = resultFactory;
 	}
 
 	/**
@@ -293,8 +303,7 @@ public class ModuleRegistry {
 			Optional<? extends Module> optModule = getModule(extension.getTargetModule());
 			if (optModule.isPresent()) {
 				reverseExtensionMap.add(optModule.get(), extension);
-			}
-			else if (!extension.isOptional()) {
+			} else if (!extension.isOptional()) {
 				throw new IllegalStateException(extension.getTargetModule() + " not installed but required by " + extension);
 			}
 		}
@@ -335,7 +344,7 @@ public class ModuleRegistry {
 		return httpRequestContextProvider;
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@SuppressWarnings({"rawtypes", "unchecked"})
 	private void applyRepositoryRegistrations() {
 		Collection<Object> repositories = filterDecorators(aggregatedModule.getRepositories());
 		for (Object repository : repositories) {
@@ -743,7 +752,7 @@ public class ModuleRegistry {
 
 		@Override
 		public ResultFactory getResultFactory() {
-			return new SimpleResultFactory(); // FIXME
+			return resultFactory;
 		}
 
 		@Override

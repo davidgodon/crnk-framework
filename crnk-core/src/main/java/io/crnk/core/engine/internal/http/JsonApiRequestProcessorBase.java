@@ -14,6 +14,7 @@ import io.crnk.core.engine.document.ErrorData;
 import io.crnk.core.engine.filter.DocumentFilterContext;
 import io.crnk.core.engine.http.HttpHeaders;
 import io.crnk.core.engine.http.HttpRequestContext;
+import io.crnk.core.engine.http.HttpResponse;
 import io.crnk.core.engine.information.resource.ResourceField;
 import io.crnk.core.engine.information.resource.ResourceInformation;
 import io.crnk.core.engine.internal.dispatcher.ControllerRegistry;
@@ -48,15 +49,6 @@ public class JsonApiRequestProcessorBase {
 		this.controllerRegistry = controllerRegistry;
 	}
 
-	protected DocumentFilterContext getFilterContext(JsonPath jsonPath, String method, Map<String, Set<String>> parameters,
-													 RepositoryMethodParameterProvider parameterProvider,
-													 Document requestBody) {
-		ResourceInformation resourceInformation = getRequestedResource(jsonPath);
-		QueryAdapter queryAdapter = queryAdapterBuilder.build(resourceInformation, parameters);
-		return new DocumentFilterContextImpl(jsonPath, queryAdapter, parameterProvider,
-				requestBody, method);
-	}
-
 	protected boolean isAcceptingPlainJson() {
 		if (acceptingPlainJson == null) {
 			acceptingPlainJson = !Boolean.parseBoolean(moduleContext.getPropertiesProvider().getProperty(CrnkProperties.REJECT_PLAIN_JSON));
@@ -64,12 +56,26 @@ public class JsonApiRequestProcessorBase {
 		return acceptingPlainJson;
 	}
 
-	protected Response setJsonError(HttpRequestContext requestContext, JsonProcessingException e) {
+	protected HttpResponse getErrorResponse(HttpRequestContext requestContext, JsonProcessingException e) {
 		final String message = "Json Parsing failed";
 		Response response = buildBadRequestResponse(message, e.getMessage());
-		setResponse(requestContext, response);
 		logger.error(message, e);
-		return response;
+		return toHttpResponse(response);
+	}
+
+	protected HttpResponse toHttpResponse(Response response) {
+		ObjectMapper objectMapper = moduleContext.getObjectMapper();
+		String responseBody;
+		try {
+			responseBody = objectMapper.writeValueAsString(response.getDocument());
+		} catch (JsonProcessingException e) {
+			throw new IllegalStateException(e);
+		}
+
+		HttpResponse httpResponse = new HttpResponse();
+		httpResponse.setBody(responseBody);
+		httpResponse.setContentType(HttpHeaders.JSONAPI_CONTENT_TYPE_AND_CHARSET);
+		return httpResponse;
 	}
 
 
@@ -99,20 +105,6 @@ public class JsonApiRequestProcessorBase {
 		return new Response(responseDocument, 400);
 	}
 
-	protected void setResponse(HttpRequestContext requestContext, Response crnkResponse) {
-		if (crnkResponse != null) {
-			ObjectMapper objectMapper = moduleContext.getObjectMapper();
-			String responseBody = null;
-			try {
-				responseBody = objectMapper.writeValueAsString(crnkResponse.getDocument());
-			} catch (JsonProcessingException e) {
-				throw new IllegalStateException(e);
-			}
-
-			requestContext.setResponseHeader("Content-Type", HttpHeaders.JSONAPI_CONTENT_TYPE_AND_CHARSET);
-			requestContext.setResponse(crnkResponse.getHttpStatus(), responseBody);
-		}
-	}
 
 	protected JsonPath getJsonPath(HttpRequestContext requestContext) {
 		String path = requestContext.getPath();

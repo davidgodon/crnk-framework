@@ -14,11 +14,13 @@ import io.crnk.core.engine.filter.DocumentFilterContext;
 import io.crnk.core.engine.http.HttpRequestContextBase;
 import io.crnk.core.engine.http.HttpRequestContextProvider;
 import io.crnk.core.engine.http.HttpRequestProcessor;
+import io.crnk.core.engine.http.HttpResponse;
 import io.crnk.core.engine.internal.dispatcher.path.JsonPath;
 import io.crnk.core.engine.internal.dispatcher.path.PathBuilder;
 import io.crnk.core.engine.internal.exception.ExceptionMapperRegistry;
 import io.crnk.core.engine.internal.utils.PreconditionUtil;
 import io.crnk.core.engine.result.Result;
+import io.crnk.core.engine.result.SimpleResult;
 import io.crnk.core.module.ModuleRegistry;
 import io.crnk.legacy.internal.RepositoryMethodParameterProvider;
 import org.slf4j.Logger;
@@ -28,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * A class that can be used to integrate Crnk with external frameworks like Jersey, Spring etc. See crnk-rs
  * and crnk-servlet for usage.
  */
-public class HttpRequestProcessorImpl implements RequestDispatcher {
+public class HttpRequestDispatcherImpl implements RequestDispatcher {
 
 
 	private final ExceptionMapperRegistry exceptionMapperRegistry;
@@ -37,7 +39,7 @@ public class HttpRequestProcessorImpl implements RequestDispatcher {
 
 	private ModuleRegistry moduleRegistry;
 
-	public HttpRequestProcessorImpl(ModuleRegistry moduleRegistry, ExceptionMapperRegistry exceptionMapperRegistry) {
+	public HttpRequestDispatcherImpl(ModuleRegistry moduleRegistry, ExceptionMapperRegistry exceptionMapperRegistry) {
 		this.moduleRegistry = moduleRegistry;
 		this.exceptionMapperRegistry = exceptionMapperRegistry;
 
@@ -45,30 +47,8 @@ public class HttpRequestProcessorImpl implements RequestDispatcher {
 		this.moduleRegistry.setRequestDispatcher(this);
 	}
 
-	/*
 	@Override
-	public Result processAsync(HttpRequestContextBase requestContextBase) throws IOException {
-		HttpRequestContextBaseAdapter requestContext = new HttpRequestContextBaseAdapter(requestContextBase);
-		HttpRequestContextProvider httpRequestContextProvider = moduleRegistry.getHttpRequestContextProvider();
-		try {
-			// FIXME reactive httpRequestContextProvider.onRequestStarted(requestContext);
-			List<HttpRequestProcessor> processors = moduleRegistry.getHttpRequestProcessors();
-			PreconditionUtil.assertFalse("no processors available", processors.isEmpty());
-			for (HttpRequestProcessor processor : processors) {
-				if (processor.accepts(requestContext)) {
-					return processor.processAsync(requestContext);
-				}
-			}
-			return null;
-		}
-		finally {
-			// FIXME reactive  httpRequestContextProvider.onRequestFinished();
-		}
-	}
-	*/
-
-	@Override
-	public Result process(HttpRequestContextBase requestContextBase) throws IOException {
+	public Result<HttpResponse> process(HttpRequestContextBase requestContextBase) throws IOException {
 		HttpRequestContextBaseAdapter requestContext = new HttpRequestContextBaseAdapter(requestContextBase);
 		HttpRequestContextProvider httpRequestContextProvider = moduleRegistry.getHttpRequestContextProvider();
 		try {
@@ -77,14 +57,20 @@ public class HttpRequestProcessorImpl implements RequestDispatcher {
 			List<HttpRequestProcessor> processors = moduleRegistry.getHttpRequestProcessors();
 			PreconditionUtil.assertFalse("no processors available", processors.isEmpty());
 			for (HttpRequestProcessor processor : processors) {
-				processor.process(requestContext);
-				if (requestContext.hasResponse()) {
-					break;
+				if (processor.supportsAsync()) {
+					if (processor.accepts(requestContext)) {
+						return processor.processAsync(requestContext);
+					}
+
+				} else {
+					processor.process(requestContext);
+					if (requestContext.hasResponse()) {
+						return new SimpleResult<>(requestContext.getResponse());
+					}
 				}
 			}
 			return null;
-		}
-		finally {
+		} finally {
 			httpRequestContextProvider.onRequestFinished();
 		}
 	}
@@ -92,8 +78,8 @@ public class HttpRequestProcessorImpl implements RequestDispatcher {
 	@Override
 	@Deprecated
 	public Response dispatchRequest(String path, String method, Map<String, Set<String>> parameters,
-			RepositoryMethodParameterProvider parameterProvider,
-			Document requestBody) {
+									RepositoryMethodParameterProvider parameterProvider,
+									Document requestBody) {
 
 		List<HttpRequestProcessor> processors = moduleRegistry.getHttpRequestProcessors();
 		JsonApiRequestProcessor processor = (JsonApiRequestProcessor) processors.stream()
@@ -128,8 +114,7 @@ public class HttpRequestProcessorImpl implements RequestDispatcher {
 			List<DocumentFilter> filters = moduleRegistry.getFilters();
 			if (filterIndex == filters.size()) {
 				return null;
-			}
-			else {
+			} else {
 				DocumentFilter filter = filters.get(filterIndex);
 				filterIndex++;
 				return filter.filter(context, this);

@@ -1,24 +1,27 @@
 package io.crnk.servlet;
 
-import java.io.IOException;
-import javax.servlet.AsyncContext;
-import javax.servlet.AsyncEvent;
-import javax.servlet.AsyncListener;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import io.crnk.core.boot.CrnkBoot;
 import io.crnk.core.engine.dispatcher.RequestDispatcher;
 import io.crnk.core.engine.http.HttpRequestContextProvider;
+import io.crnk.core.engine.http.HttpResponse;
 import io.crnk.core.engine.internal.utils.PreconditionUtil;
+import io.crnk.core.engine.result.Result;
+import io.crnk.core.engine.result.ResultFactory;
+import io.crnk.core.engine.result.SimpleResultFactory;
 import io.crnk.servlet.internal.ServletModule;
 import io.crnk.servlet.internal.ServletPropertiesProvider;
 import io.crnk.servlet.internal.ServletRequestContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.*;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Async/reactive servlet filter class to integrate with Crnk.
@@ -29,22 +32,50 @@ import io.crnk.servlet.internal.ServletRequestContext;
  */
 public class AsyncCrnkServlet extends HttpServlet {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(AsyncCrnkServlet.class);
+
 	protected CrnkBoot boot = new CrnkBoot();
 
 	private int timeout = 30000;
 
-	public AsyncCrnkServlet() {
+	protected ThreadPoolExecutor executor;
 
+	private boolean executorCreated = false;
+
+	public AsyncCrnkServlet() {
+	}
+
+	public void setResultFactory(ResultFactory resultFactory) {
+		boot.getModuleRegistry().setResultFactory(resultFactory);
 	}
 
 	@Override
-	public void init() throws ServletException {
+	public void init() {
+		if (boot.getModuleRegistry().getResultFactory() instanceof SimpleResultFactory) {
+			throw new IllegalStateException("call setResultFactory with a async implementation");
+		}
+
+		if (executor == null) {
+			executor = new ThreadPoolExecutor(100, 200, 50000L,
+					TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(100));
+			executorCreated = true;
+		}
+
 		HttpRequestContextProvider provider = boot.getModuleRegistry().getHttpRequestContextProvider();
 		boot.setPropertiesProvider(new ServletPropertiesProvider(getServletConfig()));
 		boot.addModule(new ServletModule(provider));
 		initCrnk(boot);
 		boot.boot();
 	}
+
+	@Override
+	public void destroy() {
+		if (executorCreated) {
+			executor.shutdown();
+			executor = null;
+		}
+	}
+
 
 	public CrnkBoot getBoot() {
 		return boot;
@@ -58,43 +89,68 @@ public class AsyncCrnkServlet extends HttpServlet {
 		// nothing to do here
 	}
 
-	@Override
-	public void destroy() {
-		// nothing to do
-	}
 
 	@Override
-	public void service(ServletRequest req, ServletResponse res) throws IOException, ServletException {
+	public void service(ServletRequest req, ServletResponse res) throws IOException {
 		PreconditionUtil
 				.assertTrue("only http supported, ", req instanceof HttpServletRequest && res instanceof HttpServletResponse);
-		final AsyncContext ctx = req.startAsync();
-		ctx.setTimeout(timeout);
+
+		HttpServletResponse httpResponse = (HttpServletResponse) res;
 
 		ServletContext servletContext = getServletContext();
 		ServletRequestContext context = new ServletRequestContext(servletContext, (HttpServletRequest) req,
-				(HttpServletResponse) res, boot.getWebPathPrefix());
+				httpResponse, boot.getWebPathPrefix());
 		RequestDispatcher requestDispatcher = boot.getRequestDispatcher();
 
-		// FIXME		requestDispatcher.processAsync(context);
 
-		// attach listener to respond to lifecycle events of this AsyncContext
-		ctx.addListener(new AsyncListener() {
-			public void onComplete(AsyncEvent event) throws IOException {
-				log("onComplete called");
-			}
+		long startTime = System.currentTimeMillis();
+		System.out.println("AsyncLongRunningServlet Start::Name="
+				+ Thread.currentThread().getName() + "::ID="
+				+ Thread.currentThread().getId());
 
-			public void onTimeout(AsyncEvent event) throws IOException {
-				log("onTimeout called");
-			}
 
-			public void onError(AsyncEvent event) throws IOException {
-				log("onError called");
-			}
+		AsyncContext asyncCtx = req.startAsync();
+		asyncCtx.addListener(new CrnkAsyncListener());
+		asyncCtx.setTimeout(timeout);
 
-			public void onStartAsync(AsyncEvent event) throws IOException {
-				log("onStartAsync called");
-			}
-		});
+		Result<HttpResponse> response = requestDispatcher.process(context);
+		response.subscribe(it -> {
+					it.getHeaders().entrySet().forEach(entry -> httpResponse.setHeader(entry.getKey(), entry.getValue()));
+					httpResponse.setStatus(it.getStatusCode());
+					try {
+						ServletOutputStream outputStream = httpResponse.getOutputStream();
+						outputStream.write(it.getBody());
+						outputStream.close();
+					} catch (IOException e) {
+						LOGGER.error("failed to process request", e);
+					}
+				}, exception -> LOGGER.error("failed to process request", exception)
+		);
+
+
+		long endTime = System.currentTimeMillis();
+		System.out.println("AsyncLongRunningServlet End::Name="
+				+ Thread.currentThread().getName() + "::ID="
+				+ Thread.currentThread().getId() + "::Time Taken="
+				+ (endTime - startTime) + " ms.");
+
 	}
 
+	public class CrnkAsyncListener implements AsyncListener {
+		public void onComplete(AsyncEvent event) throws IOException {
+			log("onComplete called");
+		}
+
+		public void onTimeout(AsyncEvent event) throws IOException {
+			log("onTimeout called");
+		}
+
+		public void onError(AsyncEvent event) throws IOException {
+			log("onError called");
+		}
+
+		public void onStartAsync(AsyncEvent event) throws IOException {
+			log("onStartAsync called");
+		}
+	}
 }

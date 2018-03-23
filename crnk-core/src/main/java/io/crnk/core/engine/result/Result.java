@@ -13,6 +13,8 @@ public interface Result<T> {
 
 	<D> Result<D> map(Function<T, D> function);
 
+	void subscribe(Consumer<T> consumer, Consumer<Exception> exceptionConsumer);
+
 	Result<T> doWork(Consumer<T> function);
 
 	<D, R> Result<R> mergeMap(Result<D> other, BiFunction<T, D, R> function);

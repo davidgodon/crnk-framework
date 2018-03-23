@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.crnk.core.boot.CrnkBoot;
 import io.crnk.core.engine.http.HttpHeaders;
 import io.crnk.core.engine.http.HttpRequestContextBase;
-import io.crnk.core.engine.internal.http.HttpRequestProcessorImpl;
+import io.crnk.core.engine.internal.http.HttpRequestDispatcherImpl;
 import io.crnk.core.engine.url.ConstantServiceUrlProvider;
 import io.crnk.meta.MetaModule;
 import io.crnk.meta.MetaModuleConfig;
@@ -61,7 +61,7 @@ public class JsonApiFormatTest {
 		Mockito.when(requestContextBase.getRequestHeader("Accept"))
 				.thenReturn(anyRequest ? "*" : HttpHeaders.JSONAPI_CONTENT_TYPE);
 
-		HttpRequestProcessorImpl requestDispatcher = boot.getRequestDispatcher();
+		HttpRequestDispatcherImpl requestDispatcher = boot.getRequestDispatcher();
 		requestDispatcher.process(requestContextBase);
 
 		Mockito.verify(requestContextBase, Mockito.times(1)).setResponse(statusCaptor.capture(), responseCaptor.capture());
@@ -91,7 +91,7 @@ public class JsonApiFormatTest {
 		Mockito.when(requestContextBase.getMethod()).thenReturn("GET");
 		Mockito.when(requestContextBase.getPath()).thenReturn("/meta/");
 
-		HttpRequestProcessorImpl requestDispatcher = boot.getRequestDispatcher();
+		HttpRequestDispatcherImpl requestDispatcher = boot.getRequestDispatcher();
 		requestDispatcher.process(requestContextBase);
 
 		Mockito.verify(requestContextBase, Mockito.times(1)).setResponse(statusCaptor.capture(), responseCaptor.capture());
