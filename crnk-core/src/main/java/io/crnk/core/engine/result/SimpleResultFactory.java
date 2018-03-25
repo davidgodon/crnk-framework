@@ -11,7 +11,7 @@ public class SimpleResultFactory implements ResultFactory {
 	}
 
 	@Override
-	public <T> Result<List<T>> all(List<Result<T>> results) {
+	public <T> Result<List<T>> zip(List<Result<T>> results) {
 		ArrayList<T> list = new ArrayList<>();
 		for (Result<T> result : results) {
 			list.add(result.get());

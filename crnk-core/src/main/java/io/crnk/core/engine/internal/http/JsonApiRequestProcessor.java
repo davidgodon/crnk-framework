@@ -1,6 +1,5 @@
 package io.crnk.core.engine.internal.http;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
@@ -8,10 +7,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.crnk.core.engine.dispatcher.RequestDispatcher;
 import io.crnk.core.engine.dispatcher.Response;
 import io.crnk.core.engine.document.Document;
-import io.crnk.core.engine.error.ErrorResponse;
 import io.crnk.core.engine.error.JsonApiExceptionMapper;
 import io.crnk.core.engine.filter.DocumentFilterChain;
-import io.crnk.core.engine.filter.DocumentFilterContext;
 import io.crnk.core.engine.http.*;
 import io.crnk.core.engine.information.resource.ResourceInformation;
 import io.crnk.core.engine.internal.dispatcher.ControllerRegistry;
@@ -139,11 +136,11 @@ public class JsonApiRequestProcessor extends JsonApiRequestProcessorBase impleme
 		} else {
 			Controller controller = controllerRegistry.getController(jsonPath, method);
 			Result<Response> responseResult = controller.handleAsync(jsonPath, queryAdapter, parameterProvider, requestDocument);
-			return responseResult.mapException(this::toErrorResponse);
+			return responseResult.onErrorResume(this::toErrorResponse);
 		}
 	}
 
-	private Response toErrorResponse(Exception e) {
+	private Response toErrorResponse(Throwable e) {
 		ExceptionMapperRegistry exceptionMapperRegistry = moduleContext.getExceptionMapperRegistry();
 		Optional<JsonApiExceptionMapper> exceptionMapper = exceptionMapperRegistry.findMapperFor(e.getClass());
 		if (!exceptionMapper.isPresent()) {

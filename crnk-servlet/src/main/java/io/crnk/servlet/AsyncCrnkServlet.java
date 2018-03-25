@@ -116,6 +116,7 @@ public class AsyncCrnkServlet extends HttpServlet {
 		Result<HttpResponse> response = requestDispatcher.process(context);
 		response.subscribe(it -> {
 					it.getHeaders().entrySet().forEach(entry -> httpResponse.setHeader(entry.getKey(), entry.getValue()));
+					System.out.println("????" + it);
 					httpResponse.setStatus(it.getStatusCode());
 					try {
 						ServletOutputStream outputStream = httpResponse.getOutputStream();

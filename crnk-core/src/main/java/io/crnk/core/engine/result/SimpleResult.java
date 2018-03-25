@@ -8,18 +8,12 @@ public class SimpleResult<T> implements Result<T> {
 
 	private T object;
 
-	// FIXME needed?
-	private RuntimeException exception;
-
 	public SimpleResult(T object) {
 		this.object = object;
 	}
 
 	@Override
 	public T get() {
-		if (exception != null) {
-			throw exception;
-		}
 		return object;
 	}
 
@@ -29,12 +23,12 @@ public class SimpleResult<T> implements Result<T> {
 	}
 
 	@Override
-	public <D> Result<D> mapException(Function<Exception, D> function) {
+	public Result<T> onErrorResume(Function<? super Throwable, T> function) {
 		throw new UnsupportedOperationException("only available for async implementations");
 	}
 
 	@Override
-	public void subscribe(Consumer<T> consumer, Consumer<Exception> exceptionConsumer) {
+	public void subscribe(Consumer<T> consumer, Consumer<? super Throwable> exceptionConsumer) {
 		throw new UnsupportedOperationException("only available for async implementations");
 	}
 
@@ -45,7 +39,7 @@ public class SimpleResult<T> implements Result<T> {
 	}
 
 	@Override
-	public <D, R> Result<R> mergeMap(Result<D> other, BiFunction<T, D, R> function) {
+	public <D, R> Result<R> zipWith(Result<D> other, BiFunction<T, D, R> function) {
 		D otherObject = other.get();
 		return new SimpleResult<>(function.apply(object, otherObject));
 	}
@@ -55,8 +49,4 @@ public class SimpleResult<T> implements Result<T> {
 		return other.apply(object);
 	}
 
-	@Override
-	public Exception getException() {
-		return exception;
-	}
 }

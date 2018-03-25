@@ -81,7 +81,7 @@ public class FieldResourcePost extends ResourceUpsert {
 
 		Result<JsonApiResponse> parentResource = endpointRegistryEntry.getResourceRepository(parameterProvider).findOne(castedResourceId, queryAdapter);
 
-		return createdDocument.mergeMap(parentResource,
+		return createdDocument.zipWith(parentResource,
 				(created, parent) -> attachToParent(parent, endpointRegistryEntry, relationshipField, created, parameterProvider, queryAdapter))
 				.merge(it -> it)
 				.map(this::toResponse);

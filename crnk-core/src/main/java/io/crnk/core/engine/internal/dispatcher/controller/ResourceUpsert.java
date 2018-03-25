@@ -250,7 +250,7 @@ public abstract class ResourceUpsert extends ResourceIncludeField {
 		}
 
 		ResultFactory resultFactory = context.getResultFactory();
-		return resultFactory.all((List) results);
+		return resultFactory.zip((List) results);
 	}
 
 	protected Optional<Result> setRelationsFieldAsync(Object newResource, RegistryEntry registryEntry,
@@ -297,7 +297,7 @@ public abstract class ResourceUpsert extends ResourceIncludeField {
 					relatedResults.add(fetchRelated(entry, typedRelationshipId, parameterProvider, queryAdapter));
 				}
 
-				return Optional.of(context.getResultFactory().all(relatedResults).doWork(relatedObjects -> {
+				return Optional.of(context.getResultFactory().zip(relatedResults).doWork(relatedObjects -> {
 					List relatedList = new LinkedList<>();
 					relatedList.addAll(relatedObjects);
 					relationshipField.getAccessor().setValue(newResource, relatedList);

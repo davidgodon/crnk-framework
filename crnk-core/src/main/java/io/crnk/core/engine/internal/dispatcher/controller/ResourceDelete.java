@@ -46,6 +46,6 @@ public class ResourceDelete extends BaseController {
 			results.add(result);
 		}
 
-		return context.getResultFactory().all(results).map(it -> new Response(null, 204));
+		return context.getResultFactory().zip(results).map(it -> new Response(null, 204));
 	}
 }

@@ -13,15 +13,14 @@ public interface Result<T> {
 
 	<D> Result<D> map(Function<T, D> function);
 
-	<D> Result<D> mapException(Function<Exception, D> function);
+	Result<T> onErrorResume(Function<? super Throwable, T> function);
 
-	void subscribe(Consumer<T> consumer, Consumer<Exception> exceptionConsumer);
+	void subscribe(Consumer<T> consumer, Consumer<? super Throwable> exceptionConsumer);
 
 	Result<T> doWork(Consumer<T> function);
 
-	<D, R> Result<R> mergeMap(Result<D> other, BiFunction<T, D, R> function);
+	<D, R> Result<R> zipWith(Result<D> other, BiFunction<T, D, R> function);
 
 	<R> Result<R> merge(Function<T, Result<R>> other);
 
-	Exception getException();
 }

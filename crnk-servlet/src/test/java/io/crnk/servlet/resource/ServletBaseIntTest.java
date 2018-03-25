@@ -18,7 +18,6 @@ import org.springframework.web.client.RestTemplate;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = ServletTestApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DirtiesContext
-@Ignore
 public class ServletBaseIntTest {
 
 	@Value("${local.server.port}")

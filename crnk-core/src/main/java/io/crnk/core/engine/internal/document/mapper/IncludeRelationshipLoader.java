@@ -74,12 +74,12 @@ public class IncludeRelationshipLoader {
 		if (!sourceResourcesWithData.isEmpty()) {
 			Result<Set<Resource>> lookupWithId = lookupRelatedResourcesWithId(request, sourceResourcesWithData,
 					relationshipField);
-			result = result.mergeMap(lookupWithId, this::mergeList);
+			result = result.zipWith(lookupWithId, this::mergeList);
 		}
 		if (!sourceResourcesWithoutData.isEmpty()) {
 			Result<Set<Resource>> lookupWithoutData = lookupRelatedResourceWithRelationship(request, sourceResourcesWithoutData,
 					relationshipField);
-			result = result.mergeMap(lookupWithoutData, this::mergeList);
+			result = result.zipWith(lookupWithoutData, this::mergeList);
 		}
 		return result;
 	}
