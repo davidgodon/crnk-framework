@@ -9,6 +9,7 @@ import java.util.concurrent.Callable;
 import io.crnk.core.engine.http.HttpHeaders;
 import io.crnk.core.engine.http.HttpRequestContext;
 import io.crnk.core.engine.http.HttpRequestContextBase;
+import io.crnk.core.engine.http.HttpResponse;
 import io.crnk.core.engine.internal.utils.ExceptionUtil;
 import io.crnk.legacy.internal.RepositoryMethodParameterProvider;
 
@@ -169,5 +170,15 @@ public class HttpRequestContextBaseAdapter implements HttpRequestContext {
 	@Override
 	public String getResponseHeader(String name) {
 		return base.getResponseHeader(name);
+	}
+
+	@Override
+	public HttpResponse getResponse() {
+		return base.getResponse();
+	}
+
+	@Override
+	public void setResponse(HttpResponse response) {
+		base.setResponse(response);
 	}
 }

@@ -59,7 +59,8 @@ public class HttpRequestDispatcherImpl implements RequestDispatcher {
 			for (HttpRequestProcessor processor : processors) {
 				if (processor.supportsAsync()) {
 					if (processor.accepts(requestContext)) {
-						return processor.processAsync(requestContext);
+						Result<HttpResponse> response = processor.processAsync(requestContext);
+						return response.doWork(it -> requestContext.setResponse(it));
 					}
 
 				} else {
@@ -87,8 +88,8 @@ public class HttpRequestDispatcherImpl implements RequestDispatcher {
 
 		JsonPath jsonPath = new PathBuilder(moduleRegistry.getResourceRegistry()).build(path);
 
-		return processor.process(jsonPath, method, parameters,
-				parameterProvider, requestBody);
+		return processor.processAsync(jsonPath, method, parameters,
+				parameterProvider, requestBody).get();
 	}
 
 

@@ -164,8 +164,9 @@ public class HttpRequestDispatcherImplTest {
 		CollectionGet controller = mock(CollectionGet.class);
 		when(controller.isAcceptable(any(JsonPath.class), eq("GET"))).thenCallRealMethod();
 
+		Response expectedResponse = new Response(null, 200);
 		when(controller.handleAsync(any(JsonPath.class), any(QueryAdapter.class), any(RepositoryMethodParameterProvider.class),
-				any(Document.class))).thenReturn(new SimpleResult<>(null));
+				any(Document.class))).thenReturn(new SimpleResult<>(expectedResponse));
 
 		ControllerRegistry controllerRegistry = boot.getControllerRegistry();
 		controllerRegistry.getControllers().clear();
@@ -267,13 +268,14 @@ public class HttpRequestDispatcherImplTest {
 		RequestDispatcher requestDispatcher = new HttpRequestDispatcherImpl(moduleRegistry,
 				ExceptionMapperRegistryTest.exceptionMapperRegistry);
 
-		Response response = requestDispatcher.dispatchRequest("tasks", null, null, null, null);
+		Map<String, Set<String>> params = new HashMap<>();
+		Response response = requestDispatcher.dispatchRequest("tasks", HttpMethod.GET.toString(), params, null, null);
 		assertThat(response).isNotNull();
 		assertThat(response.getHttpStatus()).isEqualTo(HttpStatus.BAD_REQUEST_400);
 	}
 
 	@Test
-	public void shouldThrowExceptionAsIsIfMapperIsNotAvailable() throws Exception {
+	public void shouldProcessUnknownExceptionsAsInternalServerError() {
 		ControllerRegistry controllerRegistry = mock(ControllerRegistry.class);
 		// noinspection unchecked
 		when(controllerRegistry.getController(any(JsonPath.class), anyString())).thenThrow(ArithmeticException.class);
@@ -283,8 +285,8 @@ public class HttpRequestDispatcherImplTest {
 				requestDispatcher =
 				new HttpRequestDispatcherImpl(moduleRegistry, ExceptionMapperRegistryTest.exceptionMapperRegistry);
 
-		expectedException.expect(ArithmeticException.class);
-
-		requestDispatcher.dispatchRequest("tasks", null, null, null, null);
+		Map<String, Set<String>> params = new HashMap<>();
+		Response response = requestDispatcher.dispatchRequest("tasks", HttpMethod.GET.toString(), params, null, null);
+		Assert.assertEquals(HttpStatus.INTERNAL_SERVER_ERROR_500, response.getHttpStatus().intValue());
 	}
 }

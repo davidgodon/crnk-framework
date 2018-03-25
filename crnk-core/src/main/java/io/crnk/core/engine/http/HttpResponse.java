@@ -13,7 +13,7 @@ public class HttpResponse {
 	private byte[] body;
 
 
-	void setHeader(String name, String value) {
+	public void setHeader(String name, String value) {
 		headers.put(name, value);
 	}
 

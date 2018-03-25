@@ -16,6 +16,7 @@ import javax.ws.rs.core.UriInfo;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.crnk.core.engine.http.HttpRequestContextBase;
+import io.crnk.core.engine.http.HttpResponse;
 import io.crnk.core.engine.internal.utils.UrlUtils;
 import io.crnk.core.utils.Nullable;
 import io.crnk.legacy.internal.RepositoryMethodParameterProvider;
@@ -31,15 +32,11 @@ public class JaxrsRequestContext implements HttpRequestContextBase {
 
 	private Map<String, Set<String>> parameters;
 
-	private Map<String, String> responseHeaders = new HashMap<>();
-
 	private Nullable<byte[]> requestBody = Nullable.empty();
 
-	private Integer responseCode;
-
-	private byte[] responseBody;
-
 	private RepositoryMethodParameterProvider requestParameterProvider;
+
+	private HttpResponse response = new HttpResponse();
 
 	JaxrsRequestContext(ContainerRequestContext requestContext, CrnkFeature feature) {
 		this.feature = feature;
@@ -56,7 +53,17 @@ public class JaxrsRequestContext implements HttpRequestContextBase {
 
 	@Override
 	public String getResponseHeader(String name) {
-		return responseHeaders.get(name);
+		return response.getHeader(name);
+	}
+
+	@Override
+	public HttpResponse getResponse() {
+		return response;
+	}
+
+	@Override
+	public void setResponse(HttpResponse response) {
+		this.response = response;
 	}
 
 	@Override
@@ -97,8 +104,7 @@ public class JaxrsRequestContext implements HttpRequestContextBase {
 				}
 				buffer.flush();
 				requestBody = Nullable.of(buffer.toByteArray());
-			}
-			catch (IOException e) {
+			} catch (IOException e) {
 				throw new IllegalStateException(e);
 			}
 		}
@@ -107,13 +113,13 @@ public class JaxrsRequestContext implements HttpRequestContextBase {
 
 	@Override
 	public void setResponseHeader(String name, String value) {
-		this.responseHeaders.put(name, value);
+		this.response.setHeader(name, value);
 	}
 
 	@Override
 	public void setResponse(int code, byte[] body) {
-		this.responseCode = code;
-		this.responseBody = body;
+		response.setStatusCode(code);
+		response.setBody(body);
 	}
 
 	@Override
@@ -123,14 +129,14 @@ public class JaxrsRequestContext implements HttpRequestContextBase {
 
 
 	public void checkAbort() {
-		if (responseCode != null) {
-			Response.ResponseBuilder builder = Response.status(responseCode);
+		if (response != null && response.getStatusCode() != 0) {
+			Response.ResponseBuilder builder = Response.status(response.getStatusCode());
 
-			if (responseBody != null) {
-				builder = builder.entity(new ByteArrayInputStream(responseBody));
+			if (response.getBody() != null) {
+				builder = builder.entity(new ByteArrayInputStream(response.getBody()));
 			}
 
-			for (Map.Entry<String, String> entry : responseHeaders.entrySet()) {
+			for (Map.Entry<String, String> entry : response.getHeaders().entrySet()) {
 				builder.header(entry.getKey(), entry.getValue());
 			}
 

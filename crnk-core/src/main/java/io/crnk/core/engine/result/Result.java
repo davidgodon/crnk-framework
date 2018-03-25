@@ -13,6 +13,8 @@ public interface Result<T> {
 
 	<D> Result<D> map(Function<T, D> function);
 
+	<D> Result<D> mapException(Function<Exception, D> function);
+
 	void subscribe(Consumer<T> consumer, Consumer<Exception> exceptionConsumer);
 
 	Result<T> doWork(Consumer<T> function);

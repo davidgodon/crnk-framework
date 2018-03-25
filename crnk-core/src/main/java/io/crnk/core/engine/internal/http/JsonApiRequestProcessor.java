@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.crnk.core.engine.dispatcher.RequestDispatcher;
 import io.crnk.core.engine.dispatcher.Response;
 import io.crnk.core.engine.document.Document;
+import io.crnk.core.engine.error.ErrorResponse;
 import io.crnk.core.engine.error.JsonApiExceptionMapper;
 import io.crnk.core.engine.filter.DocumentFilterChain;
 import io.crnk.core.engine.filter.DocumentFilterContext;
@@ -18,10 +19,14 @@ import io.crnk.core.engine.internal.dispatcher.controller.Controller;
 import io.crnk.core.engine.internal.dispatcher.path.ActionPath;
 import io.crnk.core.engine.internal.dispatcher.path.JsonPath;
 import io.crnk.core.engine.internal.exception.ExceptionMapperRegistry;
+import io.crnk.core.engine.internal.utils.PreconditionUtil;
 import io.crnk.core.engine.query.QueryAdapter;
 import io.crnk.core.engine.query.QueryAdapterBuilder;
 import io.crnk.core.engine.result.Result;
 import io.crnk.core.engine.result.ResultFactory;
+import io.crnk.core.engine.result.SimpleResultFactory;
+import io.crnk.core.exception.InternalServerErrorException;
+import io.crnk.core.exception.ResourceNotFoundException;
 import io.crnk.core.module.Module;
 import io.crnk.core.utils.Optional;
 import io.crnk.legacy.internal.RepositoryMethodParameterProvider;
@@ -89,69 +94,67 @@ public class JsonApiRequestProcessor extends JsonApiRequestProcessorBase impleme
 
 	@Override
 	public Result<HttpResponse> processAsync(HttpRequestContext requestContext) {
-
-		RequestDispatcher requestDispatcher = moduleContext.getRequestDispatcher();
-
-		JsonPath jsonPath = getJsonPath(requestContext);
-		Map<String, Set<String>> parameters = requestContext.getRequestParameters();
-		String method = requestContext.getMethod();
-
 		ResultFactory resultFactory = moduleContext.getResultFactory();
-
 		String path = requestContext.getPath();
+		JsonPath jsonPath = getJsonPath(requestContext);
+		String method = requestContext.getMethod();
+		Map<String, Set<String>> parameters = requestContext.getRequestParameters();
+		RepositoryMethodParameterProvider parameterProvider = requestContext.getRequestParameterProvider();
+
 		if (jsonPath instanceof ActionPath) {
 			// inital implementation, has to improve
+			RequestDispatcher requestDispatcher = moduleContext.getRequestDispatcher();
 			requestDispatcher.dispatchAction(path, method, parameters);
 			return resultFactory.just(null);
 		} else if (jsonPath != null) {
-			Document document;
+			Document requestDocument;
 			try {
-				document = getRequestDocument(requestContext);
+				requestDocument = getRequestDocument(requestContext);
 			} catch (JsonProcessingException e) {
-				return resultFactory.just(getErrorResponse(requestContext, e));
+				return resultFactory.just(getErrorResponse(e));
 			}
-
-			RepositoryMethodParameterProvider parameterProvider = requestContext.getRequestParameterProvider();
-
-			Controller controller = controllerRegistry.getController(jsonPath, method);
-
-			ResourceInformation resourceInformation = getRequestedResource(jsonPath);
-			QueryAdapter queryAdapter = queryAdapterBuilder.build(resourceInformation, parameters);
-
-			Result<Response> responseResult = controller.handleAsync(jsonPath, queryAdapter, parameterProvider, document);
-
-			DocumentFilterContextImpl filterContext =  new DocumentFilterContextImpl(jsonPath, queryAdapter, parameterProvider, document, method);
-
-
-			Result<Object> result = resultFactory.just(null);
-
-
-
-			DocumentFilterChain filterChain = getFilterChain(jsonPath, method);
-			return filterChain.doFilter(filterContext);
+			return processAsync(jsonPath, method, parameters, parameterProvider, requestDocument)
+					.map(this::toHttpResponse);
 		}
+		return resultFactory.just(getErrorResponse(new ResourceNotFoundException(path)));
 	}
 
 
-	public Response process(JsonPath jsonPath, String method, Map<String, Set<String>> parameters,
-							RepositoryMethodParameterProvider parameterProvider,
-							Document requestDocument) {
-		try {
-			DocumentFilterChain chain = getFilterChain(jsonPath, method);
-			DocumentFilterContext context = getFilterContext(jsonPath, method, parameters, parameterProvider, requestDocument);
-			return chain.doFilter(context);
-		} catch (Exception e) {
-			ExceptionMapperRegistry exceptionMapperRegistry = moduleContext.getExceptionMapperRegistry();
-			Optional<JsonApiExceptionMapper> exceptionMapper = exceptionMapperRegistry.findMapperFor(e.getClass());
-			if (exceptionMapper.isPresent()) {
-				//noinspection unchecked
-				LOGGER.debug("dispatching exception to mapper", e);
-				return exceptionMapper.get().toErrorResponse(e).toResponse();
-			} else {
-				LOGGER.error("failed to process request", e);
-				throw e;
+	public Result<Response> processAsync(JsonPath jsonPath, String method, Map<String, Set<String>> parameters, RepositoryMethodParameterProvider parameterProvider, Document requestDocument) {
+		ResultFactory resultFactory = moduleContext.getResultFactory();
+		ResourceInformation resourceInformation = getRequestedResource(jsonPath);
+		QueryAdapter queryAdapter = queryAdapterBuilder.build(resourceInformation, parameters);
+
+		if (resultFactory instanceof SimpleResultFactory) {
+			// not that document filters are not compatible with async programming
+			DocumentFilterContextImpl filterContext = new DocumentFilterContextImpl(jsonPath, queryAdapter, parameterProvider, requestDocument, method);
+			try {
+				DocumentFilterChain filterChain = getFilterChain(jsonPath, method);
+				Response response = filterChain.doFilter(filterContext);
+				return resultFactory.just(response);
+			} catch (Exception e) {
+				Response response = toErrorResponse(e);
+				return resultFactory.just(response);
 			}
+		} else {
+			Controller controller = controllerRegistry.getController(jsonPath, method);
+			Result<Response> responseResult = controller.handleAsync(jsonPath, queryAdapter, parameterProvider, requestDocument);
+			return responseResult.mapException(this::toErrorResponse);
 		}
+	}
+
+	private Response toErrorResponse(Exception e) {
+		ExceptionMapperRegistry exceptionMapperRegistry = moduleContext.getExceptionMapperRegistry();
+		Optional<JsonApiExceptionMapper> exceptionMapper = exceptionMapperRegistry.findMapperFor(e.getClass());
+		if (!exceptionMapper.isPresent()) {
+			LOGGER.error("failed to process request", e);
+			e = new InternalServerErrorException(e.getMessage());
+			exceptionMapper = exceptionMapperRegistry.findMapperFor(e.getClass());
+			PreconditionUtil.assertTrue("no exception mapper for InternalServerErrorException found", exceptionMapper.isPresent());
+		} else {
+			LOGGER.debug("dispatching exception to mapper", e);
+		}
+		return exceptionMapper.get().toErrorResponse(e).toResponse();
 	}
 
 	protected DocumentFilterChain getFilterChain(JsonPath jsonPath, String method) {
@@ -159,4 +162,5 @@ public class JsonApiRequestProcessor extends JsonApiRequestProcessorBase impleme
 		return new DocumentFilterChainImpl(moduleContext, controller);
 
 	}
+
 }

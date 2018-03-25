@@ -29,6 +29,16 @@ public class SimpleResult<T> implements Result<T> {
 	}
 
 	@Override
+	public <D> Result<D> mapException(Function<Exception, D> function) {
+		throw new UnsupportedOperationException("only available for async implementations");
+	}
+
+	@Override
+	public void subscribe(Consumer<T> consumer, Consumer<Exception> exceptionConsumer) {
+		throw new UnsupportedOperationException("only available for async implementations");
+	}
+
+	@Override
 	public Result<T> doWork(Consumer<T> function) {
 		function.accept(object);
 		return this;

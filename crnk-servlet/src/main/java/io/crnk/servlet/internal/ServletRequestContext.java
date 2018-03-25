@@ -29,6 +29,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import io.crnk.core.engine.http.HttpRequestContextBase;
+import io.crnk.core.engine.http.HttpResponse;
 import io.crnk.core.engine.internal.utils.PreconditionUtil;
 import io.crnk.core.engine.internal.utils.UrlUtils;
 import io.crnk.core.utils.Nullable;
@@ -38,9 +39,9 @@ import io.crnk.servlet.internal.legacy.ServletParametersProvider;
 public class ServletRequestContext implements HttpRequestContextBase {
 
 
-	private final HttpServletRequest request;
+	private final HttpServletRequest servletRequest;
 
-	private final HttpServletResponse response;
+	private final HttpServletResponse servletResponse;
 
 	private final ServletParametersProvider parameterProvider;
 
@@ -50,23 +51,32 @@ public class ServletRequestContext implements HttpRequestContextBase {
 
 	private Nullable<byte[]> requestBody = Nullable.empty();
 
-	private boolean hasResponse;
+	private HttpResponse response = new HttpResponse();
 
 	private String pathPrefix;
 
 	public ServletRequestContext(final ServletContext servletContext, final HttpServletRequest request,
-			final HttpServletResponse response, String pathPrefix) {
+								 final HttpServletResponse response, String pathPrefix) {
 		this.pathPrefix = pathPrefix;
 		this.servletContext = servletContext;
-		this.request = request;
-		this.response = response;
+		this.servletRequest = request;
+		this.servletResponse = response;
 		this.parameterProvider = new ServletParametersProvider(servletContext, request, response);
 		this.parameters = getParameters(request);
 	}
 
 
-	public boolean checkAbort() {
-		return hasResponse;
+	public boolean checkAbort() throws IOException {
+		if (response.getStatusCode() > 0) {
+			servletResponse.setStatus(response.getStatusCode());
+			if (response.getBody() != null) {
+				OutputStream out = servletResponse.getOutputStream();
+				out.write(response.getBody());
+				out.close();
+			}
+			return true;
+		}
+		return false;
 	}
 
 	private Map<String, Set<String>> getParameters(HttpServletRequest request) {
@@ -85,7 +95,7 @@ public class ServletRequestContext implements HttpRequestContextBase {
 
 	@Override
 	public String getRequestHeader(String name) {
-		return request.getHeader(name);
+		return servletRequest.getHeader(name);
 	}
 
 	@Override
@@ -95,11 +105,11 @@ public class ServletRequestContext implements HttpRequestContextBase {
 
 	@Override
 	public String getPath() {
-		String path = request.getPathInfo();
+		String path = servletRequest.getPathInfo();
 
 		// Serving with Filter, pathInfo can be null.
 		if (path == null) {
-			path = request.getRequestURI().substring(request.getContextPath().length());
+			path = servletRequest.getRequestURI().substring(servletRequest.getContextPath().length());
 		}
 
 		if (pathPrefix != null && path.startsWith(pathPrefix)) {
@@ -115,8 +125,8 @@ public class ServletRequestContext implements HttpRequestContextBase {
 
 	@Override
 	public String getBaseUrl() {
-		String requestUrl = request.getRequestURL().toString();
-		String servletPath = request.getServletPath();
+		String requestUrl = servletRequest.getRequestURL().toString();
+		String servletPath = servletRequest.getServletPath();
 		int sep = requestUrl.indexOf(servletPath);
 
 		if (pathPrefix != null && servletPath.startsWith(pathPrefix)) {
@@ -133,15 +143,13 @@ public class ServletRequestContext implements HttpRequestContextBase {
 	public byte[] getRequestBody() {
 		if (!requestBody.isPresent()) {
 			try {
-				InputStream is = request.getInputStream();
+				InputStream is = servletRequest.getInputStream();
 				if (is != null) {
 					requestBody = Nullable.of(io.crnk.core.engine.internal.utils.IOUtils.readFully(is));
-				}
-				else {
+				} else {
 					requestBody = Nullable.nullValue();
 				}
-			}
-			catch (IOException e) {
+			} catch (IOException e) {
 				throw new IllegalStateException(e); // FIXME
 			}
 		}
@@ -150,24 +158,18 @@ public class ServletRequestContext implements HttpRequestContextBase {
 
 	@Override
 	public void setResponseHeader(String name, String value) {
-		PreconditionUtil.assertFalse("response set, cannot add further headers", hasResponse);
 		response.setHeader(name, value);
 	}
 
 	@Override
-	public void setResponse(int code, byte[] body) throws IOException {
-		hasResponse = true;
-		response.setStatus(code);
-		if (body != null) {
-			OutputStream out = response.getOutputStream();
-			out.write(body);
-			out.close();
-		}
+	public void setResponse(int code, byte[] body) {
+		response.setStatusCode(code);
+		response.setBody(body);
 	}
 
 	@Override
 	public String getMethod() {
-		return request.getMethod().toUpperCase();
+		return servletRequest.getMethod().toUpperCase();
 	}
 
 	@Override
@@ -175,13 +177,30 @@ public class ServletRequestContext implements HttpRequestContextBase {
 		return response.getHeader(name);
 	}
 
-
-	public HttpServletRequest getRequest() {
-		return request;
+	@Override
+	public HttpResponse getResponse() {
+		return response;
 	}
 
-	public HttpServletResponse getResponse() {
-		return response;
+	@Override
+	public void setResponse(HttpResponse response) {
+		this.response = response;
+	}
+
+	/**
+	 * @deprecated use {{@link #getResponseHeader(String)}}
+	 */
+	@Deprecated
+	public HttpServletRequest getRequest() {
+		return servletRequest;
+	}
+
+	public HttpServletRequest getServletRequest() {
+		return servletRequest;
+	}
+
+	public HttpServletResponse getServletResponse() {
+		return servletResponse;
 	}
 
 	public ServletContext getServletContext() {

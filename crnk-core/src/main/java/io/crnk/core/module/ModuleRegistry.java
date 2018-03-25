@@ -65,7 +65,7 @@ import io.crnk.legacy.repository.annotations.JsonApiResourceRepository;
  */
 public class ModuleRegistry {
 
-	private ResultFactory resultFactory;
+	private ResultFactory resultFactory = new SimpleResultFactory();
 
 	enum InitializedState {
 		NOT_INITIALIZED,

@@ -16,8 +16,10 @@ public interface HttpRequestProcessor {
 
 	@Deprecated
 	default void process(HttpRequestContext context) throws IOException {
-		HttpResponse response = processAsync(context).get();
-		context.setResponse(response);
+		if (accepts(context)) {
+			HttpResponse response = processAsync(context).get();
+			context.setResponse(response);
+		}
 	}
 
 	default Result<HttpResponse> processAsync(HttpRequestContext context) {

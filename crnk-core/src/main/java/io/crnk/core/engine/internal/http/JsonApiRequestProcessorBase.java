@@ -15,6 +15,7 @@ import io.crnk.core.engine.filter.DocumentFilterContext;
 import io.crnk.core.engine.http.HttpHeaders;
 import io.crnk.core.engine.http.HttpRequestContext;
 import io.crnk.core.engine.http.HttpResponse;
+import io.crnk.core.engine.http.HttpStatus;
 import io.crnk.core.engine.information.resource.ResourceField;
 import io.crnk.core.engine.information.resource.ResourceInformation;
 import io.crnk.core.engine.internal.dispatcher.ControllerRegistry;
@@ -26,6 +27,7 @@ import io.crnk.core.engine.query.QueryAdapterBuilder;
 import io.crnk.core.engine.registry.RegistryEntry;
 import io.crnk.core.engine.registry.ResourceRegistry;
 import io.crnk.core.exception.ResourceFieldNotFoundException;
+import io.crnk.core.exception.ResourceNotFoundException;
 import io.crnk.core.module.Module;
 import io.crnk.legacy.internal.RepositoryMethodParameterProvider;
 import org.slf4j.Logger;
@@ -56,11 +58,22 @@ public class JsonApiRequestProcessorBase {
 		return acceptingPlainJson;
 	}
 
-	protected HttpResponse getErrorResponse(HttpRequestContext requestContext, JsonProcessingException e) {
+	protected HttpResponse getErrorResponse(JsonProcessingException e) {
 		final String message = "Json Parsing failed";
 		Response response = buildBadRequestResponse(message, e.getMessage());
 		logger.error(message, e);
 		return toHttpResponse(response);
+	}
+
+	protected HttpResponse getErrorResponse(ResourceNotFoundException e) {
+		final String message = "Not found";
+		Document responseDocument = new Document();
+		responseDocument.setErrors(Arrays.asList(ErrorData.builder()
+				.setStatus(String.valueOf(HttpStatus.NOT_FOUND_404))
+				.setTitle(message)
+				.build()));
+		logger.warn(message, e);
+		return toHttpResponse(new Response(responseDocument, HttpStatus.NOT_FOUND_404));
 	}
 
 	protected HttpResponse toHttpResponse(Response response) {
@@ -75,6 +88,7 @@ public class JsonApiRequestProcessorBase {
 		HttpResponse httpResponse = new HttpResponse();
 		httpResponse.setBody(responseBody);
 		httpResponse.setContentType(HttpHeaders.JSONAPI_CONTENT_TYPE_AND_CHARSET);
+		httpResponse.setStatusCode(response.getHttpStatus());
 		return httpResponse;
 	}
 

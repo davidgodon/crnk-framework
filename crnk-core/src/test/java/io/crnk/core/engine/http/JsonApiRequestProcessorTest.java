@@ -117,12 +117,12 @@ public class JsonApiRequestProcessorTest {
 	@Test
 	public void ignoreRequestForPatchAndWildcardContentType() throws IOException {
 		Mockito.when(requestContextBase.getMethod()).thenReturn("PATCH");
-		Mockito.when(requestContextBase.getPath()).thenReturn("/tasks/");
+		Mockito.when(requestContextBase.getPath()).thenReturn("/tasks/12");
 		Mockito.when(requestContextBase.getRequestHeader("Accept")).thenReturn("*");
 		Assert.assertFalse(JsonApiRequestProcessor.isJsonApiRequest(requestContext, false));
 
 		processor.process(requestContext);
-		Mockito.verify(requestContextBase, Mockito.times(0)).setResponse(Mockito.anyInt(), Mockito.any(byte[].class));
+		Mockito.verify(requestContextBase, Mockito.times(0)).setResponse(Mockito.any(HttpResponse.class));
 	}
 
 	@Test
@@ -145,11 +145,11 @@ public class JsonApiRequestProcessorTest {
 
 		processor.process(requestContext);
 
-		ArgumentCaptor<byte[]> contentCaptor = ArgumentCaptor.forClass(byte[].class);
-		Mockito.verify(requestContextBase, Mockito.times(1)).setResponse(Mockito.eq(200), contentCaptor.capture());
+		ArgumentCaptor<HttpResponse> contentCaptor = ArgumentCaptor.forClass(HttpResponse.class);
+		Mockito.verify(requestContextBase, Mockito.times(1)).setResponse(contentCaptor.capture());
 
-		String json = new String(contentCaptor.getValue());
-
+		String json = new String(contentCaptor.getValue().getBody());
+		Assert.assertEquals(200, contentCaptor.getValue().getStatusCode());
 		Document document = boot.getObjectMapper().readerFor(Document.class).readValue(json);
 		Assert.assertTrue(document.getData().isPresent());
 
@@ -169,10 +169,11 @@ public class JsonApiRequestProcessorTest {
 
 		processor.process(requestContext);
 
-		ArgumentCaptor<byte[]> contentCaptor = ArgumentCaptor.forClass(byte[].class);
-		Mockito.verify(requestContextBase, Mockito.times(1)).setResponse(Mockito.eq(200), contentCaptor.capture());
+		ArgumentCaptor<HttpResponse> contentCaptor = ArgumentCaptor.forClass(HttpResponse.class);
+		Mockito.verify(requestContextBase, Mockito.times(1)).setResponse(contentCaptor.capture());
 
-		String json = new String(contentCaptor.getValue());
+		Assert.assertEquals(200, contentCaptor.getValue().getStatusCode());
+		String json = new String(contentCaptor.getValue().getBody());
 
 		Document document = boot.getObjectMapper().readerFor(Document.class).readValue(json);
 		Assert.assertTrue(document.getData().isPresent());
@@ -211,12 +212,11 @@ public class JsonApiRequestProcessorTest {
 
 		processor.process(requestContext);
 
-		ArgumentCaptor<byte[]> contentCaptor = ArgumentCaptor.forClass(byte[].class);
-		Mockito.verify(requestContextBase, Mockito.times(1)).setResponse(Mockito.eq(HttpStatus.CREATED_201), contentCaptor
-				.capture
-						());
+		ArgumentCaptor<HttpResponse> contentCaptor = ArgumentCaptor.forClass(HttpResponse.class);
+		Mockito.verify(requestContextBase, Mockito.times(1)).setResponse(contentCaptor.capture());
 
-		String json = new String(contentCaptor.getValue());
+		String json = new String(contentCaptor.getValue().getBody());
+		Assert.assertEquals(HttpStatus.CREATED_201, contentCaptor.getValue().getStatusCode());
 
 		Document document = boot.getObjectMapper().readerFor(Document.class).readValue(json);
 		Assert.assertTrue(document.getData().isPresent());
@@ -239,35 +239,17 @@ public class JsonApiRequestProcessorTest {
 
 		processor.process(requestContext);
 
-		ArgumentCaptor<byte[]> contentCaptor = ArgumentCaptor.forClass(byte[].class);
-		Mockito.verify(requestContextBase, Mockito.times(1)).setResponse(Mockito.eq(HttpStatus.BAD_REQUEST_400), contentCaptor
-				.capture
-						());
+		ArgumentCaptor<HttpResponse> contentCaptor = ArgumentCaptor.forClass(HttpResponse.class);
+		Mockito.verify(requestContextBase, Mockito.times(1)).setResponse(contentCaptor.capture());
 
-		String json = new String(contentCaptor.getValue());
+		Assert.assertEquals(HttpStatus.BAD_REQUEST_400, contentCaptor.getValue().getStatusCode());
+		String json = new String(contentCaptor.getValue().getBody());
 
 		Document document = boot.getObjectMapper().readerFor(Document.class).readValue(json);
 		Assert.assertFalse(document.getData().isPresent());
 		Assert.assertEquals(1, document.getErrors().size());
 		ErrorData errorData = document.getErrors().get(0);
 		Assert.assertEquals("400", errorData.getStatus());
-	}
-
-	@Test
-	public void testHttpRequestProcessorRegistration() throws IOException {
-		Mockito.when(requestContextBase.getMethod()).thenReturn("GET");
-		Mockito.when(requestContextBase.getPath()).thenReturn("/tasks/");
-		Mockito.when(requestContextBase.getRequestHeader("Accept")).thenReturn("*");
-
-		boot.getRequestDispatcher().process(requestContext);
-
-		ArgumentCaptor<byte[]> contentCaptor = ArgumentCaptor.forClass(byte[].class);
-		Mockito.verify(requestContextBase, Mockito.times(1)).setResponse(Mockito.eq(200), contentCaptor.capture());
-
-		String json = new String(contentCaptor.getValue());
-
-		Document document = boot.getObjectMapper().readerFor(Document.class).readValue(json);
-		Assert.assertTrue(document.getData().isPresent());
 	}
 
 	@Test
@@ -283,11 +265,13 @@ public class JsonApiRequestProcessorTest {
 
 		processor.process(requestContext);
 
-		ArgumentCaptor<byte[]> contentCaptor = ArgumentCaptor.forClass(byte[].class);
+		ArgumentCaptor<HttpResponse> contentCaptor = ArgumentCaptor.forClass(HttpResponse.class);
 		Mockito.verify(requestContextBase, Mockito.times(1))
-				.setResponse(Mockito.eq(HttpStatus.BAD_REQUEST_400), contentCaptor.capture());
+				.setResponse(contentCaptor.capture());
 
-		String json = new String(contentCaptor.getValue());
+		Assert.assertEquals(HttpStatus.BAD_REQUEST_400, contentCaptor.getValue().getStatusCode());
+
+		String json = new String(contentCaptor.getValue().getBody());
 
 		Document document = boot.getObjectMapper().readerFor(Document.class).readValue(json);
 		Assert.assertFalse(document.getData().isPresent());
